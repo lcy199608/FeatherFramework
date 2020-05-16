@@ -10,16 +10,16 @@ using Newtonsoft.Json;
 public static class SaveHandler
 {
     const int KEY_SIZE = 256;
-    const string SYS_DATA_FILE_NAME = "sys";
+    const string SYS_DATA_FILE_NAME = "sys"; 
     const string TEMP_DATA_FILE_NAME = "data";
     const string EXIST_TEMP_SLOT_TITLE = "ExistSlots";
 
-    public static int? CurrentTempSlotId { get; private set; }
+    public static int? CurrentTempSlotId { get; private set; } //当前的SlitId
 
-    static ES3Settings es3Setting;
-    static Dictionary<string, string> systemDataDic;
-    static Dictionary<int, Dictionary<string, string>> tempDataDic;
-    static HashSet<int> existTempDataSlotSet;
+    static ES3Settings es3Setting; //ES3的配置
+    static Dictionary<string, string> systemDataDic; //系统数据
+    static Dictionary<int, Dictionary<string, string>> tempDataDic; // 当前加载的临时数据
+    static HashSet<int> existTempDataSlotSet; //当前的存档位
     static string initVector;
 
     //初始化
@@ -102,7 +102,7 @@ public static class SaveHandler
         return defaultValue;
     }
 
-    public static void SetTempData<T>(string ID, T value, int GroupID = 0, bool SaveImmediately = false)
+    public static void SetTempData<T>(string ID, T value, bool SaveImmediately = true,int GroupID = 0)
     {
         if (CurrentTempSlotId == null)
         {
@@ -171,7 +171,7 @@ public static class SaveHandler
         }
         else
         {
-            SetTempData(key.ID, value, key.GroupID, SaveImmediately);
+            SetTempData(key.ID, value, SaveImmediately, key.GroupID);
         }
     }
 
@@ -233,7 +233,7 @@ public static class SaveHandler
         }
     }
 
-    //MD5加密
+    // 获取MD5值
     public static string GetMd5Str(string ConvertString)
     {
         MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
