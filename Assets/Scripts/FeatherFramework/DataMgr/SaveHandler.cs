@@ -14,7 +14,7 @@ public static class SaveHandler
     const string TEMP_DATA_FILE_NAME = "data";
     const string EXIST_TEMP_SLOT_TITLE = "ExistSlots";
 
-    public static int? CurrentTempSlotId { get; private set; } //当前的SlitId
+    public static int? CurrentTempSlotId { get; private set; } //当前的SlotId
 
     static ES3Settings es3Setting; //ES3的配置
     static Dictionary<string, string> systemDataDic; //系统数据
@@ -37,9 +37,10 @@ public static class SaveHandler
             ES3.DeleteFile();
             systemDataDic = ES3.Load(SYS_DATA_FILE_NAME, new Dictionary<string, string>(), es3Setting);
         }
+        Debug.Log("Init Success");
     }
 
-
+    // 加载数据
     public static void LoadTempData(int SlotId)
     {
         if (CurrentTempSlotId == null || CurrentTempSlotId != SlotId)
@@ -60,6 +61,7 @@ public static class SaveHandler
         }
     }
 
+    // 存储系统数据
     public static void SetSystemData<T>(string ID, T value, bool SaveImmediately = false)
     {
         if (systemDataDic == null)
@@ -88,6 +90,7 @@ public static class SaveHandler
         }
     }
 
+    // 获取系统数据
     public static T GetSystemData<T>(string ID, T defaultValue)
     {
         if (systemDataDic == null)
@@ -102,6 +105,7 @@ public static class SaveHandler
         return defaultValue;
     }
 
+    // 存储普通数据
     public static void SetTempData<T>(string ID, T value, bool SaveImmediately = true,int GroupID = 0)
     {
         if (CurrentTempSlotId == null)
@@ -134,6 +138,7 @@ public static class SaveHandler
         }
     }
 
+    // 获取普通数据
     public static T GetTempData<T>(string ID, T defaultValue, int GroupId = 0)
     {
         if (CurrentTempSlotId == null)
@@ -151,6 +156,7 @@ public static class SaveHandler
         }
     }
 
+    // 取值
     public static T GetValue<T>(SQLIdHolder key, T defaultValue)
     {
         if (key.IsSystemData)
@@ -163,6 +169,7 @@ public static class SaveHandler
         }
     }
 
+    // 存值
     public static void SetValue<T>(SQLIdHolder key, T value, bool SaveImmediately = true)
     {
         if (key.IsSystemData)
@@ -208,7 +215,7 @@ public static class SaveHandler
         }
     }
 
-    //清除某个slot
+    //清除某个slot档位
     public static void DeleteTempDataTable(int slotID = 0)
     {
         if (CurrentTempSlotId == slotID)
@@ -234,7 +241,7 @@ public static class SaveHandler
     }
 
     // 获取MD5值
-    public static string GetMd5Str(string ConvertString)
+    private static string GetMd5Str(string ConvertString)
     {
         MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
         string t2 = BitConverter.ToString(md5.ComputeHash(Encoding.UTF8.GetBytes(ConvertString)), 4, 8);

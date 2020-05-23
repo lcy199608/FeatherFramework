@@ -20,14 +20,12 @@ public class Test : SingletonMono<Test>
     {
         //a.RemoveAll(_ => b.Contains(_));
         //a = b.Concat(a).ToList();
-
         //a.ForEach(_ => Debug.Log("a:" + _)); //输出 456123
 
+        //反射
         //string aa = "Test1";
         //Type t = Type.GetType(aa);
-
         //var obj = t.Assembly.CreateInstance(aa);
-
         //MethodInfo method = t.GetMethod("Abc");
         //method.Invoke(obj, null);
 

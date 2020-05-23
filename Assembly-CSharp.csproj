@@ -78,6 +78,7 @@
     <Compile Include="Assets\Scripts\FeatherFramework\DataMgr\SaveHandler.cs" />
     <Compile Include="Assets\Scripts\FeatherFramework\Singleton\Singleton.cs" />
     <Compile Include="Assets\Scripts\FeatherFramework\Singleton\SingletonMono.cs" />
+    <Compile Include="Assets\Scripts\Test\SaveTest.cs" />
     <Compile Include="Assets\Scripts\Test\Test.cs" />
     <Compile Include="Assets\Scripts\Test\Test1.cs" />
     <Compile Include="Assets\Scripts\Test\TestBtn.cs" />
