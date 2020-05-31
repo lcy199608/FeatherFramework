@@ -37,6 +37,9 @@ public static class SaveHandler
             ES3.DeleteFile();
             systemDataDic = ES3.Load(SYS_DATA_FILE_NAME, new Dictionary<string, string>(), es3Setting);
         }
+
+        existTempDataSlotSet = GetSystemData(EXIST_TEMP_SLOT_TITLE, new HashSet<int>());
+
         Debug.Log("Init Success");
     }
 
