@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 
-//不能拖拽赋值东西
 public class SingletonMono<T> : MonoBehaviour
     where T: SingletonMono<T>
 {
