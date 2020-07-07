@@ -52,27 +52,27 @@ public class MonoController : SingletonMono<MonoController>
 
     }
 
-    public bool IsInvoking(string methodName)
+    public new bool IsInvoking(string methodName)
     {
 
     }
 
-    public bool IsInvoking()
+    public new bool IsInvoking()
     {
 
     }
 
-    public Coroutine StartCoroutine(string methodName)
+    public new Coroutine StartCoroutine(string methodName)
     {
-
+        return base.StartCoroutine(methodName);
     }
 
-    public Coroutine StartCoroutine(IEnumerator routine)
+    public new Coroutine StartCoroutine(IEnumerator routine)
     {
-
+        return base.StartCoroutine(routine);
     }
 
-    public Coroutine StartCoroutine(string methodName, [DefaultValue("null")] object value)
+    public new Coroutine StartCoroutine(string methodName, [DefaultValue("null")] object value)
     {
 
     }
