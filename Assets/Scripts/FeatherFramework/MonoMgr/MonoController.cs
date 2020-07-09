@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Internal;
 
 /// <summary>
 /// 声明生命周期函数
@@ -27,39 +28,39 @@ public class MonoController : SingletonMono<MonoController>
         updateEvent -= action;
     }
 
-    public void print(object message) 
+    public new void print(object message) 
     {
-
+        MonoBehaviour.print(message);
     }
 
-    public void CancelInvoke(string methodName)
+    public new void CancelInvoke(string methodName)
     {
-
+        base.CancelInvoke(methodName);
     }
 
-    public void CancelInvoke()
+    public new void CancelInvoke()
     {
-
+        base.CancelInvoke();
     }
 
-    public void Invoke(string methodName, float time)
+    public new void Invoke(string methodName, float time)
     {
-
+        base.Invoke(methodName, time);
     }
 
-    public void InvokeRepeating(string methodName, float time, float repeatRate)
+    public new void InvokeRepeating(string methodName, float time, float repeatRate)
     {
-
+        base.InvokeRepeating(methodName, time, repeatRate);
     }
 
     public new bool IsInvoking(string methodName)
     {
-
+        return base.IsInvoking(methodName);
     }
 
     public new bool IsInvoking()
     {
-
+        return base.IsInvoking();
     }
 
     public new Coroutine StartCoroutine(string methodName)
@@ -74,26 +75,26 @@ public class MonoController : SingletonMono<MonoController>
 
     public new Coroutine StartCoroutine(string methodName, [DefaultValue("null")] object value)
     {
-
+        return base.StartCoroutine(methodName, value);
     }
 
-    public void StopAllCoroutines()
+    public new void StopAllCoroutines()
     {
-
+        base.StopAllCoroutines();
     }
 
-    public void StopCoroutine(IEnumerator routine)
+    public new void StopCoroutine(IEnumerator routine)
     {
-
+        base.StopCoroutine(routine);
     }
 
-    public void StopCoroutine(Coroutine routine)
+    public new void StopCoroutine(Coroutine routine)
     {
-
+        base.StopCoroutine(routine);
     }
 
-    public void StopCoroutine(string methodName)
+    public new void StopCoroutine(string methodName)
     {
-
+        base.StopCoroutine(methodName);
     }
 }
