@@ -7,11 +7,11 @@ public class EventCenterTest : MonoBehaviour
 {
     void Awake()
     {
-        EventCenter.Instance.AddEventListener("Test", GetReward);
+        EventCenter.Instance.AddEventListener<int>("Test", GetReward);
     }
 
-    void GetReward(object obj)
+    void GetReward(int a)
     {
-        Debug.Log((obj as int?).ToString());
+        Debug.Log(a.ToString());
     }
 }

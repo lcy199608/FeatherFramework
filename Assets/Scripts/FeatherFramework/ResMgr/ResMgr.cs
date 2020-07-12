@@ -20,7 +20,7 @@ public class ResMgr : Singleton<ResMgr>
     //异步加载资源
     public void LoadAsync<T>(string name,UnityAction<T> callback) where T : Object
     {
-        MonoController.Instance.StartCoroutine(ReallyLoadAsync(name, callback));
+        MonoMgr.Instance.StartCoroutine(ReallyLoadAsync(name, callback));
     }
 
     //开启异步加载

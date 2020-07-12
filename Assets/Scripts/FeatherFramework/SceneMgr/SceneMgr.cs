@@ -19,7 +19,7 @@ public class SceneMgr : Singleton<SceneMgr>
 
     public void LoadSceneAsync(string name,UnityAction action)
     {
-        MonoController.Instance.StartCoroutine(ReallyLoadSceneAsync(name, action));
+        MonoMgr.Instance.StartCoroutine(ReallyLoadSceneAsync(name, action));
     }
 
     private IEnumerator ReallyLoadSceneAsync(string name,UnityAction action)
