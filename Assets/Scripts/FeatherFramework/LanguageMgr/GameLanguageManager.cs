@@ -5,6 +5,7 @@ public class GameLanguageManager : Singleton<GameLanguageManager>
     public GameLanguageManager()
     {
         currentLanguage = SaveHandler.GetSystemData(languageFile, currentLanguage);
+        EventCenter.Instance.EventTrigger("语言切换");
     }
 
     SupportedLanguage? currentLanguage;
@@ -58,6 +59,10 @@ public class GameLanguageManager : Singleton<GameLanguageManager>
             return currentLanguage.Value;
         }
 
-        set { SaveHandler.SetSystemData(languageFile, value); }
+        set 
+        { 
+            SaveHandler.SetSystemData(languageFile, value);
+            EventCenter.Instance.EventTrigger("语言切换");
+        }
     }
 }
