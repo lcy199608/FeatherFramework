@@ -28,7 +28,7 @@ public class PoolData
         //存起来
         poolList.Add(obj);
         //设置父对象
-        obj.transform.parent = fatherObj.transform;
+        obj.transform.SetParent(fatherObj.transform);
         //失活，让其隐藏
         obj.SetActive(false);
     }
@@ -43,7 +43,7 @@ public class PoolData
         //激活，让其展示
         obj.SetActive(true);
         //断开父子关系
-        obj.transform.parent = null;
+        obj.transform.SetParent(null);
 
         return obj;
     }

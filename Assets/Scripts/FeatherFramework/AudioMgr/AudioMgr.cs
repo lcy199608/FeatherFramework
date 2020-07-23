@@ -28,27 +28,29 @@ public class AudioMgr : SingletonMono<AudioMgr>
     }
 
     // 播放音效
-    public void PlayAudio(string clipName, float delayTime = 0,float fadeTime = 0)
+    public void PlayAudio(string clipName, float fadeTime = 0)
     {
         GetAudioClip(clipName,_ => {
             tempAudio = GetAudioSource();
+            tempAudio.volume = 0;
             tempAudio.clip = _;
             tempAudio.loop = false;
-            tempAudio.DOPlay();
-            tempAudio.DOFade(Vol, fadeTime).SetDelay(delayTime);
+            tempAudio.Play();
+            tempAudio.DOFade(Vol, fadeTime).Restart();
             allAudioSources.Add(tempAudio);
         });
     }
 
     // 播放循环音频
-    public void PlayLoopAudio(string clipName,float delayTime = 0, float fadeTime = 0)
+    public void PlayLoopAudio(string clipName, float fadeTime = 0)
     {
         GetAudioClip(clipName,_ => {
-            tempAudio.clip = _;
             tempAudio = GetAudioSource();
+            tempAudio.volume = 0;
+            tempAudio.clip = _;
             tempAudio.loop = true;
-            tempAudio.DOPlay();
-            tempAudio.DOFade(Vol, fadeTime).SetDelay(delayTime);
+            tempAudio.Play();
+            tempAudio.DOFade(Vol, fadeTime).Restart();
             allAudioSources.Add(tempAudio);
         });
     }
@@ -63,7 +65,7 @@ public class AudioMgr : SingletonMono<AudioMgr>
         else
         {
             action += _ => audios.Add(_);
-            ResMgr.Instance.LoadAsync(clipName, action);
+            ResMgr.Instance.LoadAsync("Audios/" + clipName, action);
         }
     }
 
@@ -85,12 +87,13 @@ public class AudioMgr : SingletonMono<AudioMgr>
     private AudioSource AddAudioSource()
     {
         tempAudio = gameObject.AddComponent<AudioSource>();
+        tempAudio.playOnAwake = false;
         tempAudio.spatialBlend = 0;
         return tempAudio;
     }
 
     // 停止某个循环的音频
-    public void StopLoopAudio(string clipName)
+    public void StopAudio(string clipName)
     {
         allAudioSources.Where(_ => _.clip.name == clipName).ToList().ForEach(_ => _.Stop());
     }

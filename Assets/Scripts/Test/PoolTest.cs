@@ -10,7 +10,7 @@ public class PoolTest : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            PoolMgr.Instance.GetObj("Image", _ => {  _.transform.parent = parent == null ? parent = GameObject.Find("Canvas").transform : parent;_.transform.localPosition = Vector3.zero; });
+            PoolMgr.Instance.GetObj("Image", _ => { _.transform.SetParent(parent == null ? parent = GameObject.Find("Canvas").transform : parent); _.transform.localPosition = Vector3.zero; });
         }
 
         if (Input.GetMouseButtonDown(1))

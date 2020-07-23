@@ -12,8 +12,8 @@ public class Test : SingletonMono<Test>
     //public List<int> b = new List<int> { 4, 5 ,6};
     private void Start()
     {
-        SaveHandler.Initialize();
-        SaveHandler.SetTempData("test", "1");
+        //SaveHandler.Initialize();
+        //SaveHandler.SetTempData("test", "1");
     }
 
     public void DoTest()
@@ -33,5 +33,10 @@ public class Test : SingletonMono<Test>
         {
             //Debug.Log();
         }
+    }
+
+    public void LoadScene()
+    {
+        SceneMgr.Instance.LoadScene("SampleScene", null);
     }
 }
