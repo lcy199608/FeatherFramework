@@ -2,105 +2,69 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
-
-public enum AudioType
-{
-    Ambient, //背景音乐
-    Effect //音效
-}
+using DG.Tweening;
+using System;
+using UnityEngine.Events;
 
 public class AudioMgr : SingletonMono<AudioMgr>
 {
-    const string effectVolFile = "EffectVol";
-    const string ambientVolFile = "AmbientVol";
+    const string volFile = "VolFile";
 
     private AudioSource tempAudio;
-    public List<AudioClip> audios;
+    private List<AudioClip> audios = new List<AudioClip>();
     private List<AudioSource> allAudioSources = new List<AudioSource>();
-    private Dictionary<string, AudioSource> loopAudioSources = new Dictionary<string, AudioSource>();
-    private List<AudioSource> ambientAudios = new List<AudioSource>();
-    private List<AudioSource> effectAudios = new List<AudioSource>();
 
-    float effectVol;
-    float ambientVol;
+    float vol;
 
-    public float EffectVol
+    public float Vol
     {
-        get { return effectVol; }
-        set { effectVol = value; }
-    }
-    public float AmbientVol
-    {
-        get { return ambientVol; }
-        set { ambientVol = value; }
+        get { return vol; }
+        set { vol = value; }
     }
 
     private void Awake()
     {
-        effectVol = PlayerPrefs.GetFloat(effectVolFile, 1.0f);
-        ambientVol = PlayerPrefs.GetFloat(ambientVolFile, 1.0f);
+        vol = PlayerPrefs.GetFloat(volFile, 1.0f);
     }
 
     // 播放音效
-    public void PlayAudio(string clipName, float delayTime = 0)
+    public void PlayAudio(string clipName, float delayTime = 0,float fadeTime = 0)
     {
-        ClearAudioSources();
-        var tempClip = GetAudioClip(clipName);
-        if(tempClip == null)
-        {
-            return;
-        }
-        tempAudio.clip = tempClip;
-        tempAudio = GetAudioSource();
-        tempAudio.loop = false;
-        tempAudio.PlayDelayed(delayTime);
-        tempAudio.volume = EffectVol;
-        allAudioSources.Add(tempAudio);
-        effectAudios.Add(tempAudio);
+        GetAudioClip(clipName,_ => {
+            tempAudio = GetAudioSource();
+            tempAudio.clip = _;
+            tempAudio.loop = false;
+            tempAudio.DOPlay();
+            tempAudio.DOFade(Vol, fadeTime).SetDelay(delayTime);
+            allAudioSources.Add(tempAudio);
+        });
     }
 
     // 播放循环音频
-    public void PlayLoopAudio(string clipName, AudioType type = AudioType.Ambient, float delayTime = 0)
+    public void PlayLoopAudio(string clipName,float delayTime = 0, float fadeTime = 0)
     {
-        ClearAudioSources();
-        if (loopAudioSources.ContainsKey(clipName))
-            return;
-        var tempClip = GetAudioClip(clipName);
-        if (tempClip == null)
-        {
-            return;
-        }
-        tempAudio.clip = tempClip;
-        tempAudio = GetAudioSource();
-        tempAudio.loop = true;
-        tempAudio.PlayDelayed(delayTime);
-        loopAudioSources.Add(clipName, tempAudio);
-        switch (type)
-        {
-            case AudioType.Effect:
-                tempAudio.volume = EffectVol;
-                effectAudios.Add(tempAudio);
-                break;
-            case AudioType.Ambient:
-                tempAudio.volume = AmbientVol;
-                ambientAudios.Add(tempAudio);
-                break;
-        }
+        GetAudioClip(clipName,_ => {
+            tempAudio.clip = _;
+            tempAudio = GetAudioSource();
+            tempAudio.loop = true;
+            tempAudio.DOPlay();
+            tempAudio.DOFade(Vol, fadeTime).SetDelay(delayTime);
+            allAudioSources.Add(tempAudio);
+        });
     }
 
     // 获取音频文件
-    private AudioClip GetAudioClip(string clipName)
+    private void GetAudioClip(string clipName,UnityAction<AudioClip> action)
     {
         if(audios.Any(_ => _.name == clipName))
         {
-            return audios.First(_ => _.name == clipName);
+            action(audios.First(_ => _.name == clipName));
         }
         else
         {
-            Debug.LogError("没有找到对应音频文件！");
-            return null;
+            action += _ => audios.Add(_);
+            ResMgr.Instance.LoadAsync(clipName, action);
         }
-        
     }
 
     // 获取AudioSource组件
@@ -125,79 +89,31 @@ public class AudioMgr : SingletonMono<AudioMgr>
         return tempAudio;
     }
 
-    private void ClearAudioSources()
-    {
-        if(ambientAudios.Any(_ => !_.isPlaying))
-        {
-            ambientAudios = ambientAudios.Where(_ => _.isPlaying).ToList();
-        }
-
-        if (effectAudios.Any(_ => !_.isPlaying))
-        {
-            effectAudios = effectAudios.Where(_ => _.isPlaying).ToList();
-        }
-    }
-
     // 停止某个循环的音频
     public void StopLoopAudio(string clipName)
     {
-        if (!loopAudioSources.ContainsKey(clipName) || loopAudioSources[clipName] == null)
-            return;
-        tempAudio = loopAudioSources[clipName];
-        tempAudio.Stop();
-        tempAudio.loop = false;
-        if (ambientAudios.Contains(tempAudio))
-            ambientAudios.Remove(tempAudio);
-        if (effectAudios.Contains(tempAudio))
-            effectAudios.Remove(tempAudio);
-        loopAudioSources.Remove(clipName);
-    }
-
-    // 循环音频全部停止播放
-    public void StopAllLoopAudio()
-    {
-        ClearAudioSources();
-        loopAudioSources.Where(_ => _.Value.isPlaying == true && _.Value.loop).ToList().ForEach(_ => StopLoopAudio(_.Key));
-    }
-
-    // 停止全部
-    public void StopAllAudio()
-    {
-        ClearAudioSources();
-        allAudioSources.Where(_ => _.isPlaying).ToList().ForEach(_ => _.Stop());
+        allAudioSources.Where(_ => _.clip.name == clipName).ToList().ForEach(_ => _.Stop());
     }
 
     // 改变音量
-    public void ChangeEffectVolume(float v)
+    public void ChangeVolume(float v)
     {
-        EffectVol = v;
-        ClearAudioSources();
-        for (int i = 0; i < effectAudios.Count; i++)
+        Vol = v;
+        for (int i = 0; i < allAudioSources.Count; i++)
         {
-            effectAudios[i].volume = v;
-        }
-    }
-    public void ChangeAmbientVolume(float v)
-    {
-        AmbientVol = v;
-        ClearAudioSources();
-        for (int i = 0; i < ambientAudios.Count; i++)
-        {
-            ambientAudios[i].volume = v;
+            allAudioSources[i].volume = v;
         }
     }
 
     public void Mute()
     {
-        if(EffectVol != 0)
-            ChangeEffectVolume(0);
-        if(AmbientVol != 0)
-            ChangeAmbientVolume(0);
+        if(Vol != 0)
+            ChangeVolume(0);
+        Save();
     }
 
     public void Save()
     {
-        PlayerPrefs.SetFloat(effectVolFile, effectVol);
-        PlayerPrefs.SetFloat(ambientVolFile, ambientVol);
+        PlayerPrefs.SetFloat(volFile, Vol);
     }
 }
