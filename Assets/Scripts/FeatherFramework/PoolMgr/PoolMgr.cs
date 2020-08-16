@@ -83,6 +83,7 @@ public class PoolMgr : Singleton<PoolMgr>
         if (poolObj == null)
         {
             poolObj = new GameObject("Pool");
+            MonoMgr.DontDestroyOnLoad(poolObj);
 
         }
         //里面有记录这个键
