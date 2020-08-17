@@ -82,7 +82,7 @@ public class PoolMgr : Singleton<PoolMgr>
     {
         if (poolObj == null)
         {
-            poolObj = new GameObject("Pool");
+            poolObj = new GameObject("ObjPool");
             MonoMgr.DontDestroyOnLoad(poolObj);
 
         }
@@ -104,6 +104,9 @@ public class PoolMgr : Singleton<PoolMgr>
     {
         pool1Dic.Clear();
         poolObj = null;
+        GameObject pool = GameObject.Find("ObjPool");
+        if (pool != null)
+            GameObject.Destroy(pool);
     }
 }
 
