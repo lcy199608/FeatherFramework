@@ -27,7 +27,7 @@ public class SceneMgr : Singleton<SceneMgr>
         AsyncOperation ao = SceneManager.LoadSceneAsync(name);
         while (!ao.isDone)
         {
-            EventCenter.Instance.EventTrigger("进度条更新", ao.progress);
+            EventCenter.Instance.EventTrigger("进度条更新", ao.progress); //如果需要同步进度条
             yield return ao.progress;
         }
         action();
