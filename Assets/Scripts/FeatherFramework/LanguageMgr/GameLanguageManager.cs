@@ -61,7 +61,7 @@ public class GameLanguageManager : Singleton<GameLanguageManager>
 
         set 
         { 
-            SaveHandler.SetSystemData(languageFile, value);
+            SaveHandler.SetSystemData(languageFile, value,true);
             EventCenter.Instance.EventTrigger("语言切换");
         }
     }
