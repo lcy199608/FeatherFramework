@@ -19,11 +19,16 @@ public class MLT_TextApplier : MonoBehaviour
 
         t.text = MLT.Text;
 
-        EventCenter.Instance.AddEventListener("语言切换", () => t.text = MLT.Text);
+        EventCenter.Instance.AddEventListener("语言切换", Switch);
+    }
+
+    void Switch()
+    {
+        t.text = MLT.Text;
     }
 
     private void OnDestroy()
     {
-        EventCenter.Instance.RemoveEventListener("语言切换", () => t.text = MLT.Text);
+        EventCenter.Instance.RemoveEventListener("语言切换", Switch);
     }
 }

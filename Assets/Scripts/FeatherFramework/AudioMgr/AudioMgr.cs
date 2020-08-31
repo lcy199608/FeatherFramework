@@ -8,6 +8,7 @@ using UnityEngine.Events;
 
 public class AudioMgr : SingletonMono<AudioMgr>
 {
+    const string path = "Audios/";
     const string volFile = "VolFile";
 
     private AudioSource tempAudio;
@@ -65,7 +66,7 @@ public class AudioMgr : SingletonMono<AudioMgr>
         else
         {
             action += _ => audios.Add(_);
-            ResMgr.Instance.LoadAsync("Audios/" + clipName, action);
+            ResMgr.Instance.LoadAsync(path + clipName, action);
         }
     }
 
