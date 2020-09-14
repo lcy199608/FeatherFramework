@@ -29,29 +29,29 @@ public class AudioMgr : SingletonMono<AudioMgr>
     }
 
     // 播放音效
-    public void PlayAudio(string clipName, float fadeTime = 0)
+    public void PlayAudio(string clipName, float fadeTime = 0, float delayTime = 0)
     {
         GetAudioClip(clipName,_ => {
             tempAudio = GetAudioSource();
             tempAudio.volume = 0;
             tempAudio.clip = _;
             tempAudio.loop = false;
-            tempAudio.Play();
-            tempAudio.DOFade(Vol, fadeTime).Restart();
+            tempAudio.PlayDelayed(delayTime);
+            tempAudio.DOFade(Vol, fadeTime).SetDelay(delayTime).Restart();
             allAudioSources.Add(tempAudio);
         });
     }
 
     // 播放循环音频
-    public void PlayLoopAudio(string clipName, float fadeTime = 0)
+    public void PlayLoopAudio(string clipName, float fadeTime = 0 ,float delayTime = 0)
     {
         GetAudioClip(clipName,_ => {
             tempAudio = GetAudioSource();
             tempAudio.volume = 0;
             tempAudio.clip = _;
             tempAudio.loop = true;
-            tempAudio.Play();
-            tempAudio.DOFade(Vol, fadeTime).Restart();
+            tempAudio.PlayDelayed(delayTime);
+            tempAudio.DOFade(Vol, fadeTime).SetDelay(delayTime).Restart();
             allAudioSources.Add(tempAudio);
         });
     }
@@ -94,9 +94,19 @@ public class AudioMgr : SingletonMono<AudioMgr>
     }
 
     // 停止某个循环的音频
-    public void StopAudio(string clipName)
+    public void StopAudio(string clipName, float fadeTime)
     {
-        allAudioSources.Where(_ => _.clip.name == clipName).ToList().ForEach(_ => _.Stop());
+        allAudioSources.Where(_ => _.clip.name == clipName).ToList().ForEach(_ =>
+        {
+            if (fadeTime != 0)
+            {
+                DOTween.To(() => _.volume, x => _.volume = x, 0, fadeTime).OnComplete(() => _.Stop());
+            }
+            else
+            {
+                _.Stop();
+            }
+        });
     }
 
     // 改变音量

@@ -3,7 +3,7 @@
 public class MLT_GameObjectSwitch : MonoBehaviour
 {
     public GameObject CN, EN, Portuguese, Spanish, French, Japanese, Korean, German;
-    private void Awake()
+    private void Start()
     {
         Switch();
 
@@ -12,14 +12,45 @@ public class MLT_GameObjectSwitch : MonoBehaviour
 
     void Switch()
     {
-        CN?.SetActive(false);
-        EN?.SetActive(false);
-        Portuguese?.SetActive(false);
-        Spanish?.SetActive(false);
-        French?.SetActive(false);
-        Japanese?.SetActive(false);
-        Korean?.SetActive(false);
-        German?.SetActive(false);
+        if (CN != null)
+        {
+            CN.SetActive(false);
+        }
+
+        if (EN != null)
+        {
+            EN.SetActive(false);
+        }
+
+        if (Portuguese != null)
+        {
+            Portuguese.SetActive(false);
+        }
+
+        if (Spanish != null)
+        {
+            Spanish.SetActive(false);
+        }
+
+        if (French != null)
+        {
+            French.SetActive(false);
+        }
+
+        if (Japanese != null)
+        {
+            Japanese.SetActive(false);
+        }
+
+        if (Korean != null)
+        {
+            Korean.SetActive(false);
+        }
+
+        if (German != null)
+        {
+            German.SetActive(false);
+        }
 
         switch (GameLanguageManager.Instance.CurrentLanguage)
         {
@@ -48,6 +79,7 @@ public class MLT_GameObjectSwitch : MonoBehaviour
                 German?.SetActive(true);
                 break;
             default:
+                CN?.SetActive(true);
                 break;
         }
     }
