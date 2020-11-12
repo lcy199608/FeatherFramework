@@ -10,6 +10,7 @@ public class AudioAction : MonoBehaviour
     public bool isDestroyPlay;
     public bool isDestroyStop;
     public float delayTime = 0;
+    public AudioType type = AudioType.EFFECT;
     public string clipName;
     public bool isLoop;
     public float fadeTime = 0;
@@ -34,11 +35,11 @@ public class AudioAction : MonoBehaviour
     {
         if (isLoop)
         {
-            AudioMgr.Instance.PlayLoopAudio(clipName, fadeTime, delayTime);
+            AudioMgr.Instance.PlayLoopAudio(clipName, type, fadeTime, delayTime);
         }
         else
         {
-            AudioMgr.Instance.PlayAudio(clipName, fadeTime, delayTime);
+            AudioMgr.Instance.PlayAudio(clipName, type, fadeTime, delayTime);
         }
     }
 

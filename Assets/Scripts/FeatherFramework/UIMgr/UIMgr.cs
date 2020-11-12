@@ -1,6 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 
 public enum UILayer
 {
@@ -15,7 +18,7 @@ public class UIInfo
     public string Name;
     public UILayer Layer;
 
-    public UIInfo(string name,UILayer layer = UILayer.Middle)
+    public UIInfo(string name, UILayer layer = UILayer.Middle)
     {
         Name = name;
         Layer = layer;
@@ -33,14 +36,42 @@ public class UIMgr : SingletonMono<UIMgr>
     private Transform top;
     private Transform system;
 
-    public void ShowUI<T>(string name, UILayer layer)
+    /// <summary>
+    /// 获取UI上的脚本
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="uiName"></param>
+    /// <returns></returns>
+    public T GetUI<T>()
     {
-        if(UICanvas == null)
+        T temp;
+        var uiName = typeof(T).Name;
+
+        if (panelDic.ContainsKey(uiName))
+        {
+            temp = panelDic[uiName].GetComponent<T>();
+        }
+        else
+        {
+            GameObject go = ResMgr.Instance.Load<GameObject>(uiPath + uiName);
+            panelDic.Add(uiName, go);
+            temp = go.GetComponent<T>();
+        }
+
+        if (temp == null)
+            Debug.LogError("获取组件失败！");
+
+        return temp;
+    }
+
+    public void ShowUI<T>(UILayer layer = UILayer.Middle)
+    {
+        if (UICanvas == null)
         {
             //同步方式加载Canvas，过场景后不删除Canvas
             UICanvas = ResMgr.Instance.Load<GameObject>(uiPath + "UICanvas");
             Transform canvas = UICanvas.transform;
-            //GameObject.DontDestroyOnLoad(UICanvas);
+            GameObject.DontDestroyOnLoad(UICanvas);
             //获取Canvas中的各个层级
             bot = canvas.Find("BottomLayer");
             mid = canvas.Find("MiddleLayer");
@@ -48,58 +79,60 @@ public class UIMgr : SingletonMono<UIMgr>
             system = canvas.Find("SystemLayer");
         }
 
+        UICanvas.GetComponent<Canvas>().worldCamera = GameObject.Find("UICamera").GetComponent<Camera>();
 
-        if (panelDic.ContainsKey(name))
+        if (panelDic.ContainsKey(typeof(T).Name))
         {
-            panelDic[name].transform.localPosition = Vector3.zero;
-            panelDic[name].transform.localScale = Vector3.one;
-            (panelDic[name].transform as RectTransform).offsetMax = Vector3.zero;
-            (panelDic[name].transform as RectTransform).offsetMin = Vector3.zero;
-            panelDic[name].transform.SetAsLastSibling();
-            panelDic[name].gameObject.SetActive(true);
-
-            var panel = panelDic[name].GetComponent<T>() as BasePanel;
-            panel.ShowPanel();
+            InitShowUI<T>(panelDic[typeof(T).Name], layer);
         }
         else
         {
-            ResMgr.Instance.LoadAsync<GameObject>(uiPath + name, _ =>
+            ResMgr.Instance.LoadAsync<GameObject>(uiPath + typeof(T).Name, _ =>
             {
-                switch (layer)
-                {
-                    case UILayer.Bottom:
-                        _.transform.SetParent(bot);
-                        _.transform.SetAsLastSibling();
-                        break;
-                    case UILayer.Middle:
-                        _.transform.SetParent(mid);
-                        _.transform.SetAsLastSibling();
-                        break;
-                    case UILayer.Top:
-                        _.transform.SetParent(top);
-                        _.transform.SetAsLastSibling();
-                        break;
-                    case UILayer.System:
-                        _.transform.SetParent(system);
-                        _.transform.SetAsLastSibling();
-                        break;
-                    default:
-                        break;
-                }
-
-                _.transform.localPosition = Vector3.zero;
-                _.transform.localScale = Vector3.one;
-                (_.transform as RectTransform).offsetMax = Vector3.zero;
-                (_.transform as RectTransform).offsetMin = Vector3.zero;
-                _.transform.SetAsLastSibling();
-                _.gameObject.SetActive(true);
-
                 var panel = _.GetComponent<T>() as BasePanel;
-                panel.ShowPanel();
+                panel.Init();
 
-                panelDic.Add(name, _);
+                InitShowUI<T>(_, layer);
+                panelDic.Add(typeof(T).Name, _);
             });
         }
+    }
+
+    /// <summary>
+    /// 初始化要显示的UI
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="_"></param>
+    /// <param name="layer"></param>
+    void InitShowUI<T>(GameObject _, UILayer layer)
+    {
+        switch (layer)
+        {
+            case UILayer.Bottom:
+                _.transform.SetParent(bot);
+                break;
+            case UILayer.Middle:
+                _.transform.SetParent(mid);
+                break;
+            case UILayer.Top:
+                _.transform.SetParent(top);
+                break;
+            case UILayer.System:
+                _.transform.SetParent(system);
+                break;
+            default:
+                break;
+        }
+
+        _.transform.localPosition = Vector3.zero;
+        _.transform.localScale = Vector3.one;
+        (_.transform as RectTransform).offsetMax = Vector3.zero;
+        (_.transform as RectTransform).offsetMin = Vector3.zero;
+        _.transform.SetAsLastSibling();
+        _.gameObject.SetActive(true);
+
+        var panel = _.GetComponent<T>() as BasePanel;
+        panel.ShowPanel();
     }
 
     public void HideUI(string name)
@@ -107,8 +140,24 @@ public class UIMgr : SingletonMono<UIMgr>
         panelDic[name].GetComponent<BasePanel>().HidePanel();
     }
 
+    public void HideAllUI()
+    {
+        panelDic.Values.ToList().ForEach(_ => _.SetActive(false));
+    }
+
+    public void RemoveSpecifiedUI(string name)
+    {
+        if (panelDic.ContainsKey(name))
+        {
+            panelDic[name].Destroy();
+            panelDic.Remove(name);
+            Resources.UnloadUnusedAssets();
+        }
+    }
+
     public void ClearCashe()
     {
+        panelDic.Values.ToList().ForEach(_ => _.Destroy());
         panelDic.Clear();
         Resources.UnloadUnusedAssets();
     }

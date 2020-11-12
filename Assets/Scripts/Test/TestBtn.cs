@@ -6,6 +6,6 @@ public class TestBtn : MonoBehaviour
 {
     public void DoTest()
     {
-        Test.Instance.DoTest();
+        
     }
 }

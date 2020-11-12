@@ -11,23 +11,6 @@ using UnityEngine.Internal;
 /// </summary>
 public class MonoMgr : SingletonMono<MonoMgr>
 {
-    public event UnityAction updateEvent;
-
-    void Update()
-    {
-        updateEvent?.Invoke();
-    }
-
-    public void AddUpdateListener(UnityAction action)
-    {
-        updateEvent += action;
-    }
-
-    public void RemoveUpdateListener(UnityAction action)
-    {
-        updateEvent -= action;
-    }
-
     public new void print(object message) 
     {
         MonoBehaviour.print(message);

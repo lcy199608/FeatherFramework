@@ -8,6 +8,8 @@ public static class GameManager
 {
     const string GameFile = "GameFile"; //游戏档位
 
+    public static int nextSceneId = 1;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Init()
     {

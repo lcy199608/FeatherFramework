@@ -6,16 +6,27 @@ using DG.Tweening;
 using System;
 using UnityEngine.Events;
 
+public enum AudioType
+{
+    BG,
+    EFFECT
+}
+
 public class AudioMgr : SingletonMono<AudioMgr>
 {
     const string path = "Audios/";
+
     const string volFile = "VolFile";
+    const string effectVolFile = "EffectVolFile";
 
     private AudioSource tempAudio;
     private List<AudioClip> audios = new List<AudioClip>();
     private List<AudioSource> allAudioSources = new List<AudioSource>();
 
+    private Dictionary<AudioSource, AudioType> audioTypes = new Dictionary<AudioSource, AudioType>();
+
     float vol;
+    float effectVol;
 
     public float Vol
     {
@@ -23,43 +34,88 @@ public class AudioMgr : SingletonMono<AudioMgr>
         set { vol = value; }
     }
 
+    public float EffectVol
+    {
+        get { return effectVol; }
+        set { effectVol = value; }
+    }
+
     private void Awake()
     {
         vol = PlayerPrefs.GetFloat(volFile, 1.0f);
+        effectVol = PlayerPrefs.GetFloat(effectVolFile, 0.7f);
     }
 
     // 播放音效
-    public void PlayAudio(string clipName, float fadeTime = 0, float delayTime = 0)
+    public void PlayAudio(string clipName, AudioType type, float fadeTime = 0, float delayTime = 0)
     {
-        GetAudioClip(clipName,_ => {
+        GetAudioClip(clipName, _ => {
             tempAudio = GetAudioSource();
             tempAudio.volume = 0;
             tempAudio.clip = _;
             tempAudio.loop = false;
+
+            if (audioTypes.ContainsKey(tempAudio))
+            {
+                audioTypes[tempAudio] = type;
+            }
+            else
+            {
+                audioTypes.Add(tempAudio, type);
+            }
+
             tempAudio.PlayDelayed(delayTime);
-            tempAudio.DOFade(Vol, fadeTime).SetDelay(delayTime).Restart();
+            switch (type)
+            {
+                case AudioType.BG:
+                    tempAudio.DOFade(Vol, fadeTime).SetDelay(delayTime).Restart();
+                    break;
+                case AudioType.EFFECT:
+                    tempAudio.DOFade(effectVol, fadeTime).SetDelay(delayTime).Restart();
+                    break;
+            }
             allAudioSources.Add(tempAudio);
         });
     }
 
     // 播放循环音频
-    public void PlayLoopAudio(string clipName, float fadeTime = 0 ,float delayTime = 0)
+    public void PlayLoopAudio(string clipName, AudioType type, float fadeTime = 0, float delayTime = 0)
     {
-        GetAudioClip(clipName,_ => {
+        GetAudioClip(clipName, _ => {
             tempAudio = GetAudioSource();
             tempAudio.volume = 0;
             tempAudio.clip = _;
             tempAudio.loop = true;
+
+            if (audioTypes.ContainsKey(tempAudio))
+            {
+                audioTypes[tempAudio] = type;
+            }
+            else
+            {
+                audioTypes.Add(tempAudio, type);
+            }
+
             tempAudio.PlayDelayed(delayTime);
-            tempAudio.DOFade(Vol, fadeTime).SetDelay(delayTime).Restart();
+
+            switch (type)
+            {
+                case AudioType.BG:
+                    tempAudio.DOFade(Vol, fadeTime).SetDelay(delayTime).Restart();
+                    break;
+                case AudioType.EFFECT:
+                    tempAudio.DOFade(effectVol, fadeTime).SetDelay(delayTime).Restart();
+                    break;
+            }
+
             allAudioSources.Add(tempAudio);
         });
     }
 
     // 获取音频文件
-    private void GetAudioClip(string clipName,UnityAction<AudioClip> action)
+    private void GetAudioClip(string clipName, UnityAction<AudioClip> action)
     {
-        if(audios.Any(_ => _.name == clipName))
+        if (audios.Any(_ => _.name == clipName))
         {
             action(audios.First(_ => _.name == clipName));
         }
@@ -113,21 +169,32 @@ public class AudioMgr : SingletonMono<AudioMgr>
     public void ChangeVolume(float v)
     {
         Vol = v;
-        for (int i = 0; i < allAudioSources.Count; i++)
-        {
-            allAudioSources[i].volume = v;
-        }
+        audioTypes?.Where(_ => _.Value == AudioType.BG).ToList().ForEach(_ => _.Key.volume = v);
+    }
+
+    public void ChangeEffectVolume(float v)
+    {
+        EffectVol = v;
+        audioTypes?.Where(_ => _.Value == AudioType.EFFECT).ToList().ForEach(_ => _.Key.volume = v);
     }
 
     public void Mute()
     {
-        if(Vol != 0)
+        if (Vol != 0)
             ChangeVolume(0);
+        Save();
+    }
+
+    public void MuteEffect()
+    {
+        if (EffectVol != 0)
+            ChangeEffectVolume(0);
         Save();
     }
 
     public void Save()
     {
         PlayerPrefs.SetFloat(volFile, Vol);
+        PlayerPrefs.SetFloat(effectVolFile, EffectVol);
     }
 }
