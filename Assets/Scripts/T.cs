@@ -2,14 +2,31 @@
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System;
-public class T : MonoBehaviour
+public class T : BasePanel
 {
+    public override void Init()
+    {
+        base.Init();
+
+    }
+
+    public override void ShowPanel()
+    {
+        
+    }
+
+    public override void HidePanel()
+    {
+
+    }
+
 //auto
+    private Button testBtn = null;
+	
+
    public void Start()
 	{
-		Img_Img = gameObject.transform.Find("/T/Img_Img").GetComponent<Image>();
+		testBtn = gameObject.transform.Find("/T/testBtn").GetComponent<Button>();
 		
 	}
-	public Image Img_Img = null;
-	
 }

@@ -14,8 +14,24 @@ public class AutoBuildTemplate
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System;
-public class #类名# : MonoBehaviour
+public class #类名# : BasePanel
 {
+    public override void Init()
+    {
+        base.Init();
+
+    }
+
+    public override void ShowPanel()
+    {
+        
+    }
+
+    public override void HidePanel()
+    {
+
+    }
+
 //auto
     #成员#
 
@@ -57,7 +73,7 @@ public class AutoBuild
             List<Transform> childList = new List<Transform>(_transforms);
 
             //UI需要查询的物体，根据规则筛选
-            var mainNode = from trans in childList where trans.name.Contains('_') && dicUIType.Keys.Contains(trans.name.Split('_')[0]) select trans;
+            var mainNode = from trans in childList where dicUIType.Keys.ToList().Any(_ => trans.name.Contains(_)) select trans;
 
             //存储每个目标路径
             var nodePathList = new Dictionary<string, string>();
@@ -93,10 +109,10 @@ public class AutoBuild
             foreach (Transform itemtran in mainNode)
             {
                 //识别变量类型
-                string typeStr = dicUIType[itemtran.name.Split('_')[0]];
+                string typeStr = dicUIType[dicUIType.Keys.First(_ => itemtran.name.Contains(_))];
 
                 //变量声明
-                memberstring += "public " + typeStr + " " + itemtran.name + " = null;\r\n\t";
+                memberstring += "private " + typeStr + " " + itemtran.name + " = null;\r\n\t";
 
                 //查找语句
                 loadedcontant += itemtran.name + " = " + "gameObject.transform.Find(\"" + nodePathList[itemtran.name] + "\").GetComponent<" + typeStr + ">();\r\n\t\t";
