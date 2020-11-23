@@ -10,7 +10,7 @@ public class EnableRecorderGos : MonoBehaviour
 {
     //ActivationRecorder必须在物体启用状态才能触发
 
-    [MenuItem("Tools/启用所有挂载ActivationRecorder的对象")]
+    [MenuItem("LcyFramework/启用所有挂载ActivationRecorder的对象")]
     static void Activating()
     {
         bool isNeedSave = false;

@@ -47,7 +47,7 @@ public class #类名# : BasePanel
 public class AutoBuild
 {
 
-    [MenuItem("生成/创建或刷新界面")]
+    [MenuItem("LcyFramework/生成或刷新UI脚本")]
     public static void BuildUIScript()
     {
 
@@ -90,6 +90,9 @@ public class AutoBuild
                     //取得上级
                     tempNode = tempNode.parent;
 
+                    if (tempNode == tempNode.root)
+                        continue;
+
                     //求出/在哪
                     int index = nodePath.IndexOf('/');
 
@@ -97,6 +100,7 @@ public class AutoBuild
                     nodePath = nodePath.Insert(index, "/" + tempNode.name);
                 }
 
+                nodePath = nodePath.Remove(0, 1);// 去掉/
                 //将最终路径存入
                 nodePathList.Add(node.name, nodePath);
             }
@@ -119,7 +123,7 @@ public class AutoBuild
             }
 
             //创建脚本的路径
-            string scriptPath = Application.dataPath + "/Scripts/" + selectobj.name + ".cs";
+            string scriptPath = Application.dataPath + "/Scripts/Game/UI/" + selectobj.name + ".cs";
 
 
             string classStr = "";
@@ -164,7 +168,7 @@ public class AutoBuild
             fileW.Close();
             file.Close();
 
-            Debug.Log("创建脚本 " + Application.dataPath + "/Scripts/" + selectobj.name + ".cs 成功!");
+            Debug.Log("创建脚本 " + Application.dataPath + "/Scripts/Game/UI/" + selectobj.name + ".cs 成功!");
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }

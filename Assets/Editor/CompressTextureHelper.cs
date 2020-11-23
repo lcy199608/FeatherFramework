@@ -37,7 +37,7 @@ public class CompressTextureHelper : EditorWindow
     //存储路径
     static ArrayList ImagePathlist;
 
-    [MenuItem("图片压缩/打开工具")]
+    [MenuItem("LcyFramework/图片压缩/打开工具")]
     static void Init()
     {
         GetWindow(typeof(CompressTextureHelper));
