@@ -11,6 +11,7 @@ public class LoadScene : MonoBehaviour
     {
         EventCenter.Instance.AddEventListener<AsyncOperation>("进度条更新", _ => 
         {
+            if (GameManager.levelPathTemp == string.Empty || !GameManager.isGoingToLevel)
                 _.allowSceneActivation = true;
         });
 
