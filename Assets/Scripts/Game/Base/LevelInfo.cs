@@ -12,8 +12,6 @@ public class LevelInfo : ScriptableObject
     public string levelName;
     public string levelPath;
     public MultiLanguageText tips;
-    public MultiLanguageText answer;
-    public string levelType; // 0为金币 1为宝箱 2为特殊 空为空
 
 #if UNITY_EDITOR
     public GameObject level;
