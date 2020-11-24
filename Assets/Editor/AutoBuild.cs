@@ -16,12 +16,6 @@ using UnityEngine.EventSystems;
 using System;
 public class #类名# : BasePanel
 {
-    public override void Init()
-    {
-        base.Init();
-
-    }
-
     public override void ShowPanel()
     {
         
@@ -35,10 +29,11 @@ public class #类名# : BasePanel
 //auto
     #成员#
 
-   public void Start()
-	{
-		#查找#
-	}
+    public override void Init()
+    {
+        base.Init();
+        #查找#
+    }
 }
 ";
 }
