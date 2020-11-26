@@ -139,6 +139,11 @@ public class UIMgr : SingletonMono<UIMgr>
     {
         panelDic[name].GetComponent<BasePanel>().HidePanel();
     }
+    public void HideUI<T>()
+    {
+        var name = typeof(T).Name;
+        panelDic[name].GetComponent<BasePanel>().HidePanel();
+    }
 
     public void HideAllUI()
     {
@@ -147,6 +152,17 @@ public class UIMgr : SingletonMono<UIMgr>
 
     public void RemoveSpecifiedUI(string name)
     {
+        if (panelDic.ContainsKey(name))
+        {
+            panelDic[name].Destroy();
+            panelDic.Remove(name);
+            Resources.UnloadUnusedAssets();
+        }
+    }
+
+    public void RemoveSpecifiedUI<T>()
+    {
+        var name = typeof(T).Name;
         if (panelDic.ContainsKey(name))
         {
             panelDic[name].Destroy();
