@@ -52,7 +52,7 @@ public class GameLanguageManager : Singleton<GameLanguageManager>
                 //}
                 else
                 {
-                    currentLanguage = SupportedLanguage.Chinese;
+                    currentLanguage = SupportedLanguage.English;
                 }
             }
             currentLanguage = SaveHandler.GetSystemData(languageFile, currentLanguage);
