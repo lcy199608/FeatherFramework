@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Text;
-
+using System;
+using System.ComponentModel;
+using UnityEngine.UI;
 
 public class AutoBuildTemplate
 {
@@ -48,6 +50,9 @@ public class AutoBuild
     [MenuItem("LcyFramework/生成或刷新UI脚本")]
     public static void BuildUIScript()
     {
+        bool temp = EditorUtility.DisplayDialog("提示", "确定生成或刷新UI脚本吗？", "确定", "取消");
+        if (!temp)
+            return;
 
         var dicUIType = new Dictionary<string, string>();
 
@@ -118,6 +123,56 @@ public class AutoBuild
 
                 //查找语句
                 loadedcontant += itemtran.name + " = " + "gameObject.transform.Find(\"" + nodePathList[itemtran.name] + "\").GetComponent<" + typeStr + ">();\r\n\t\t";
+
+                #region 自动添加组件
+                //把忘记添加组件的自动加上
+                switch (typeStr)
+                {
+                    case "Image":
+                        if(itemtran.GetComponent<Image>() == null)
+                        {
+                            itemtran.gameObject.AddComponent<Image>();
+                            EditorUtility.SetDirty(itemtran.gameObject);
+                            AssetDatabase.SaveAssets();
+                            AssetDatabase.Refresh();
+                        }
+                        break;
+
+                    case "Button":
+                        if (itemtran.GetComponent<Button>() == null)
+                        {
+                            itemtran.gameObject.AddComponent<Button>();
+                            EditorUtility.SetDirty(itemtran.gameObject);
+                            AssetDatabase.SaveAssets();
+                            AssetDatabase.Refresh();
+                        }
+                        break;
+
+                    case "Text":
+                        if (itemtran.GetComponent<Text>() == null)
+                        {
+                            itemtran.gameObject.AddComponent<Text>();
+                            EditorUtility.SetDirty(itemtran.gameObject);
+                            AssetDatabase.SaveAssets();
+                            AssetDatabase.Refresh();
+                        }
+                        break;
+
+                    case "Transform":
+                        if (itemtran.GetComponent<Transform>() == null)
+                        {
+                            itemtran.gameObject.AddComponent<Transform>();
+                            EditorUtility.SetDirty(itemtran.gameObject);
+                            AssetDatabase.SaveAssets();
+                            AssetDatabase.Refresh();
+                        }
+                        break;
+
+                    default :
+                        break;
+                }
+                #endregion
+
             }
 
             //创建脚本的路径
