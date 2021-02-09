@@ -122,7 +122,7 @@ public class AutoBuild
                 memberstring += "private " + typeStr + " " + itemtran.name + " = null;\r\n\t";
 
                 //查找语句
-                loadedcontant += itemtran.name + " = " + "gameObject.transform.Find(\"" + nodePathList[itemtran.name] + "\").GetComponent<" + typeStr + ">();\r\n\t\t";
+                loadedcontant += itemtran.name + " = " + "transform.Find(\"" + nodePathList[itemtran.name] + "\").GetComponent<" + typeStr + ">();\r\n\t\t";
 
                 #region 自动添加组件
                 //把忘记添加组件的自动加上
