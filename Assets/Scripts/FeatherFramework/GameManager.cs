@@ -22,7 +22,7 @@ public static class GameManager
 
         SceneManager.activeSceneChanged += (temp, activeScene) =>
         {
-            UIMgr.Instance.ClearCashe();
+            UIMgr.Instance.ClearPanelDic();
         };
     }
 }

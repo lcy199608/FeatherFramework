@@ -7,10 +7,31 @@ using System.Reflection;
 
 public class Test : SingletonMono<Test>
 {
-    string a1 = "testBtn";
-    string a2 = "btn";
-    private void Start()
+    private void OnGUI()
     {
-        Debug.Log(a1.Contains(a2));
+        if (GUILayout.Button("ShowUI"))
+        {
+            UIMgr.Instance.ShowUI<TestPanel>();
+        }
+
+        if (GUILayout.Button("GetUI"))
+        {
+            UIMgr.Instance.GetUI<TestPanel>().Test(10);
+        }
+
+        if (GUILayout.Button("RemoveS"))
+        {
+            UIMgr.Instance.RemoveSpecifiedUI<TestPanel>();
+        }
+
+        if (GUILayout.Button("RemoveP"))
+        {
+            UIMgr.Instance.ClearPanelDic();
+        }
+
+        if (GUILayout.Button("RemoveC"))
+        {
+            UIMgr.Instance.ClearAllCache();
+        }
     }
 }

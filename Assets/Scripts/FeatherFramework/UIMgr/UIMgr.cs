@@ -29,6 +29,7 @@ public class UIMgr : SingletonMono<UIMgr>
 {
     public const string uiPath = "UI/";
     private Dictionary<string, GameObject> panelDic = new Dictionary<string, GameObject>();
+    private Dictionary<string, GameObject> panelCacheDic = new Dictionary<string, GameObject>();
 
     GameObject UICanvas;
     private Transform bot;
@@ -42,7 +43,7 @@ public class UIMgr : SingletonMono<UIMgr>
     /// <typeparam name="T"></typeparam>
     /// <param name="uiName"></param>
     /// <returns></returns>
-    public T GetUI<T>()
+    public T GetUI<T>(bool isShow = false)
     {
         T temp;
         var uiName = typeof(T).Name;
@@ -50,12 +51,50 @@ public class UIMgr : SingletonMono<UIMgr>
         if (panelDic.ContainsKey(uiName))
         {
             temp = panelDic[uiName].GetComponent<T>();
+
+            Debug.LogError("GETUI 有实例直接获取!");
         }
         else
         {
-            GameObject go = ResMgr.Instance.Load<GameObject>(uiPath + uiName);
-            panelDic.Add(uiName, go);
-            temp = go.GetComponent<T>();
+            //同步加载UI然后返回组件
+
+            if (UICanvas == null)
+            {
+                UICanvas = ResMgr.Instance.Load<GameObject>(uiPath + "UICanvas");
+                Transform canvas = UICanvas.transform;
+                GameObject.DontDestroyOnLoad(UICanvas);
+                bot = canvas.Find("BottomLayer");
+                mid = canvas.Find("MiddleLayer");
+                top = canvas.Find("TopLayer");
+                system = canvas.Find("SystemLayer");
+            }
+
+            UICanvas.GetComponent<Canvas>().worldCamera = GameObject.Find("UICamera").GetComponent<Camera>();
+
+            GameObject cache;
+
+            if (panelCacheDic.ContainsKey(uiName))
+            {
+                cache = panelCacheDic[uiName];
+
+                Debug.LogError("GETUI 没实例但有缓存!");
+            }
+            else
+            {
+                cache = Resources.Load<GameObject>(uiPath + uiName);
+                panelCacheDic.Add(uiName, cache); //缓存UI
+
+                Debug.LogError("GETUI 啥都没!");
+            }
+
+
+
+            var obj = Instantiate(cache);
+            temp = obj.GetComponent<T>();
+            var panel = temp as BasePanel;
+            panel.Init();
+            InitShowUI<T>(obj, UILayer.Middle,false);
+            panelDic.Add(uiName, obj);
         }
 
         if (temp == null)
@@ -81,20 +120,47 @@ public class UIMgr : SingletonMono<UIMgr>
 
         UICanvas.GetComponent<Canvas>().worldCamera = GameObject.Find("UICamera").GetComponent<Camera>();
 
-        if (panelDic.ContainsKey(typeof(T).Name))
+        var uiName = typeof(T).Name;
+
+        if (panelDic.ContainsKey(uiName))
         {
-            InitShowUI<T>(panelDic[typeof(T).Name], layer);
+            InitShowUI<T>(panelDic[uiName], layer);
+
+            Debug.LogError("SHOWUI 有实例!");
         }
         else
         {
-            ResMgr.Instance.LoadAsync<GameObject>(uiPath + typeof(T).Name, _ =>
+            if (panelCacheDic.ContainsKey(uiName))
             {
-                var panel = _.GetComponent<T>() as BasePanel;
+                var obj = panelCacheDic[uiName];
+
+                var panelTemp = Instantiate(obj);
+                var panel = panelTemp.GetComponent<T>() as BasePanel;
                 panel.Init();
 
-                InitShowUI<T>(_, layer);
-                panelDic.Add(typeof(T).Name, _);
-            });
+                InitShowUI<T>(panelTemp, layer);
+                panelDic.Add(uiName, panelTemp);
+
+                Debug.LogError("SHOWUI 没实例有缓存!");
+            }
+            else
+            {
+                var a = Resources.LoadAsync<GameObject>(uiPath + uiName);
+                a.completed += _ =>
+                {
+                    var obj = a.asset as GameObject;
+                    panelCacheDic.Add(uiName, obj); //缓存UI
+
+                    var panelTemp = Instantiate(obj);
+                    var panel = panelTemp.GetComponent<T>() as BasePanel;
+                    panel.Init();
+
+                    InitShowUI<T>(panelTemp, layer);
+                    panelDic.Add(uiName, panelTemp);
+
+                    Debug.LogError("SHOWUI 没实例没缓存!");
+                }; 
+            }
         }
     }
 
@@ -104,7 +170,7 @@ public class UIMgr : SingletonMono<UIMgr>
     /// <typeparam name="T"></typeparam>
     /// <param name="_"></param>
     /// <param name="layer"></param>
-    void InitShowUI<T>(GameObject _, UILayer layer)
+    void InitShowUI<T>(GameObject _, UILayer layer,bool isShow = true)
     {
         switch (layer)
         {
@@ -129,7 +195,7 @@ public class UIMgr : SingletonMono<UIMgr>
         (_.transform as RectTransform).offsetMax = Vector3.zero;
         (_.transform as RectTransform).offsetMin = Vector3.zero;
         _.transform.SetAsLastSibling();
-        _.gameObject.SetActive(true);
+        _.gameObject.SetActive(isShow);
 
         var panel = _.GetComponent<T>() as BasePanel;
         panel.ShowPanel();
@@ -147,7 +213,7 @@ public class UIMgr : SingletonMono<UIMgr>
 
     public void HideAllUI()
     {
-        panelDic.Values.ToList().ForEach(_ => _.SetActive(false));
+        panelDic.Values.ToList().ForEach(_ => _.GetComponent<BasePanel>().HidePanel());
     }
 
     public void RemoveSpecifiedUI(string name)
@@ -156,10 +222,14 @@ public class UIMgr : SingletonMono<UIMgr>
         {
             panelDic[name].Destroy();
             panelDic.Remove(name);
-            Resources.UnloadUnusedAssets();
+        }
+        else
+        {
+            Debug.LogError("panelDic不存在此UI!");
         }
     }
 
+    //移除指定UI实例
     public void RemoveSpecifiedUI<T>()
     {
         var name = typeof(T).Name;
@@ -167,14 +237,24 @@ public class UIMgr : SingletonMono<UIMgr>
         {
             panelDic[name].Destroy();
             panelDic.Remove(name);
-            Resources.UnloadUnusedAssets();
+        }
+        else
+        {
+            Debug.LogError("panelDic不存在此UI!");
         }
     }
 
-    public void ClearCashe()
+    //销毁所有UI实例
+    public void ClearPanelDic()
     {
         panelDic.Values.ToList().ForEach(_ => _.Destroy());
         panelDic.Clear();
+    }
+
+    //清理所有缓存，除非UI缓存太多不然尽量不要用
+    public void ClearAllCache()
+    {
+        panelCacheDic.Clear();
         Resources.UnloadUnusedAssets();
     }
 }
