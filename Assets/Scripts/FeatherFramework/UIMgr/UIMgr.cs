@@ -51,8 +51,6 @@ public class UIMgr : SingletonMono<UIMgr>
         if (panelDic.ContainsKey(uiName))
         {
             temp = panelDic[uiName].GetComponent<T>();
-
-            Debug.LogError("GETUI 有实例直接获取!");
         }
         else
         {
@@ -76,15 +74,11 @@ public class UIMgr : SingletonMono<UIMgr>
             if (panelCacheDic.ContainsKey(uiName))
             {
                 cache = panelCacheDic[uiName];
-
-                Debug.LogError("GETUI 没实例但有缓存!");
             }
             else
             {
                 cache = Resources.Load<GameObject>(uiPath + uiName);
                 panelCacheDic.Add(uiName, cache); //缓存UI
-
-                Debug.LogError("GETUI 啥都没!");
             }
 
 
@@ -125,8 +119,6 @@ public class UIMgr : SingletonMono<UIMgr>
         if (panelDic.ContainsKey(uiName))
         {
             InitShowUI<T>(panelDic[uiName], layer);
-
-            Debug.LogError("SHOWUI 有实例!");
         }
         else
         {
@@ -140,8 +132,6 @@ public class UIMgr : SingletonMono<UIMgr>
 
                 InitShowUI<T>(panelTemp, layer);
                 panelDic.Add(uiName, panelTemp);
-
-                Debug.LogError("SHOWUI 没实例有缓存!");
             }
             else
             {
@@ -157,8 +147,6 @@ public class UIMgr : SingletonMono<UIMgr>
 
                     InitShowUI<T>(panelTemp, layer);
                     panelDic.Add(uiName, panelTemp);
-
-                    Debug.LogError("SHOWUI 没实例没缓存!");
                 }; 
             }
         }
