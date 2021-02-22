@@ -43,7 +43,7 @@ public class UIMgr : SingletonMono<UIMgr>
     /// <typeparam name="T"></typeparam>
     /// <param name="uiName"></param>
     /// <returns></returns>
-    public T GetUI<T>(bool isShow = false)
+    public T GetUI<T>(bool isShow = false, UILayer layer = UILayer.Middle)
     {
         T temp;
         var uiName = typeof(T).Name;
@@ -87,7 +87,7 @@ public class UIMgr : SingletonMono<UIMgr>
             temp = obj.GetComponent<T>();
             var panel = temp as BasePanel;
             panel.Init();
-            InitShowUI<T>(obj, UILayer.Middle,false);
+            InitShowUI<T>(obj, layer, isShow);
             panelDic.Add(uiName, obj);
         }
 
