@@ -203,7 +203,7 @@ public class UIMgr : SingletonMono<UIMgr>
 
     public void HideAllUI()
     {
-        panelDic.Values.ToList().ForEach(_ => _.GetComponent<BasePanel>().HidePanel());
+        panelDic.Values.ToList().ForEach(_ => _.SetActive(false));
     }
 
     public void RemoveSpecifiedUI(string name)
