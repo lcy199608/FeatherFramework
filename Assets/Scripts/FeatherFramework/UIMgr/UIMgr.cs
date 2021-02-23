@@ -87,9 +87,11 @@ public class UIMgr : SingletonMono<UIMgr>
             temp = obj.GetComponent<T>();
             var panel = temp as BasePanel;
             panel.Init();
-            InitShowUI<T>(obj, layer, isShow);
             panelDic.Add(uiName, obj);
         }
+
+        if(isShow)
+            InitShowUI<T>(panelDic[uiName], layer, isShow);
 
         if (temp == null)
             Debug.LogError("获取组件失败！");
