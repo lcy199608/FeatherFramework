@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Linq;
@@ -203,7 +204,17 @@ public class UIMgr : SingletonMono<UIMgr>
 
     public void HideAllUI()
     {
-        panelDic.Values.ToList().ForEach(_ => _.SetActive(false));
+        panelDic.Values.ToList().ForEach(_ => 
+        {
+            try
+            {
+                _.SetActive(false);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("HideAllUI Throw Exception!");
+            }
+        });
     }
 
     public void RemoveSpecifiedUI(string name)
