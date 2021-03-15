@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Linq;
 using System;
 using System.Reflection;
+using UnityEngine.UI;
 
 public class Test : SingletonMono<Test>
 {
@@ -33,5 +34,8 @@ public class Test : SingletonMono<Test>
         {
             UIMgr.Instance.ClearAllCache();
         }
+
+        GameObject go = null;
+        go.Show();
     }
 }
