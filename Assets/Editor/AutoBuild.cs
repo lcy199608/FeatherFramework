@@ -47,7 +47,7 @@ public class #类名# : BasePanel
 public class AutoBuild
 {
 
-    [MenuItem("LcyFramework/生成或刷新UI脚本")]
+    [MenuItem("LcyFramework/生成或刷新UI脚本 %g")]
     public static void BuildUIScript()
     {
         bool temp = EditorUtility.DisplayDialog("提示", "确定生成或刷新UI脚本吗？", "确定", "取消");

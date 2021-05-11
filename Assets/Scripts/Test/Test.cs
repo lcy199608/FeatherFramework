@@ -34,7 +34,6 @@ public class Test : SingletonMono<Test>
         {
             UIMgr.Instance.ClearAllCache();
         }
-
         GameObject go = null;
         go.Show();
     }
