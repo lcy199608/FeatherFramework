@@ -52,4 +52,19 @@ public static class UnityExtension
     {
         self.transform.localPosition = new Vector3(self.transform.localPosition.x, self.transform.localPosition.y, z);
     }
+
+    public static void SetLocalScaleX<T>(this T self, float x) where T : Component
+    {
+        self.transform.localScale = new Vector3(x, self.transform.localScale.y, self.transform.localScale.z);
+    }
+
+    public static void SetLocalScaleY<T>(this T self, float y) where T : Component
+    {
+        self.transform.localScale = new Vector3(self.transform.localScale.x, y, self.transform.localScale.z);
+    }
+
+    public static void SetLocalScaleZ<T>(this T self, float z) where T : Component
+    {
+        self.transform.localScale = new Vector3(self.transform.localScale.x, self.transform.localScale.y, z);
+    }
 }

@@ -189,7 +189,8 @@ public class UIMgr : SingletonMono<UIMgr>
         _.gameObject.SetActive(isShow);
 
         var panel = _.GetComponent<T>() as BasePanel;
-        panel.ShowPanel();
+        if(isShow)
+            panel.ShowPanel();
     }
 
     public void HideUI(string name)
