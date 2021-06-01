@@ -7,6 +7,8 @@ public class AudioAction : MonoBehaviour
 {
     public bool isStartPlay;
     public bool isStartStop;
+    public bool isOnEnablePlay;
+    public bool isOnEnableStop;
     public bool isDestroyPlay;
     public bool isDestroyStop;
     public float delayTime = 0;
@@ -20,6 +22,14 @@ public class AudioAction : MonoBehaviour
         if (isStartPlay)
             PlayAudio();
         if (isStartStop)
+            Invoke("StopAudio", delayTime);
+    }
+
+    private void OnEnable()
+    {
+        if (isOnEnablePlay)
+            PlayAudio();
+        if (isOnEnableStop)
             Invoke("StopAudio", delayTime);
     }
 

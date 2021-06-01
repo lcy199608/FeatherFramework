@@ -209,6 +209,7 @@ public class UIMgr : SingletonMono<UIMgr>
         {
             try
             {
+                _.GetComponent<BasePanel>().HidePanel();
                 _.SetActive(false);
             }
             catch (Exception e)
