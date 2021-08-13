@@ -52,8 +52,8 @@ namespace ES3Types
 		protected override void ReadComponent<T>(ES3Reader reader, object obj)
 		{
 			var instance = (UnityEngine.ParticleSystem)obj;
-			// Pause particle system as some properties require it to not be playing to be set.
-			instance.Pause();
+			// Stop particle system as some properties require it to not be playing to be set.
+			instance.Stop();
 			foreach(string propertyName in reader.Properties)
 			{
 				switch(propertyName)

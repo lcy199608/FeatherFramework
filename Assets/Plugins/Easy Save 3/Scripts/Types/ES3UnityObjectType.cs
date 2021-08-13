@@ -25,7 +25,7 @@ namespace ES3Types
 
 		public virtual void WriteObject(object obj, ES3Writer writer, ES3.ReferenceMode mode)
 		{
-			if(WriteUsingDerivedType(obj, writer))
+			if(WriteUsingDerivedType(obj, writer, mode))
 				return;
 
 			var instance = obj as UnityEngine.Object;
@@ -45,12 +45,27 @@ namespace ES3Types
 			WriteUnityObject(instance, writer);
 		}
 
-		protected override void ReadObject<T>(ES3Reader reader, object obj)
-		{
-			ReadUnityObject<T>(reader, obj);
-		}
+        protected override void ReadObject<T>(ES3Reader reader, object obj)
+        {
+            var refMgr = ES3ReferenceMgrBase.Current;
+            if (refMgr != null)
+            {
+                foreach (string propertyName in reader.Properties)
+                {
+                    if (propertyName == ES3ReferenceMgrBase.referencePropertyName)
+                        // If the object we're loading into isn't registered with the reference manager, register it.
+                        refMgr.Add((UnityEngine.Object)obj, reader.Read_ref());
+                    else
+                    {
+                        reader.overridePropertiesName = propertyName;
+                        break;
+                    }
+                }
+            }
+            ReadUnityObject<T>(reader, obj);
+        }
 
-		protected override object ReadObject<T>(ES3Reader reader)
+        protected override object ReadObject<T>(ES3Reader reader)
 		{
 			var refMgr = ES3ReferenceMgrBase.Current;
 			if(refMgr == null)
@@ -66,7 +81,7 @@ namespace ES3Types
                     if(refMgr == null)
                         throw new InvalidOperationException("An Easy Save 3 Manager is required to load references. To add one to your scene, exit playmode and go to Assets > Easy Save 3 > Add Manager to Scene");
                     id = reader.Read_ref();
-					instance = refMgr.Get(id);
+					instance = refMgr.Get(id, type);
 
 					if(instance != null)
 						break;
@@ -74,8 +89,11 @@ namespace ES3Types
 				else
 				{
 					reader.overridePropertiesName = propertyName;
-					if(instance == null)
-						return ReadUnityObject<T>(reader);
+                    if (instance == null)
+                    {
+                        instance = (UnityEngine.Object)ReadUnityObject<T>(reader);
+                        refMgr.Add(instance, id);
+                    }
 					break;
 				}
 			}
@@ -83,5 +101,24 @@ namespace ES3Types
 			ReadUnityObject<T>(reader, instance);
 			return instance;
 		}
-	}
+
+        protected bool WriteUsingDerivedType(object obj, ES3Writer writer, ES3.ReferenceMode mode)
+        {
+            var objType = obj.GetType();
+
+            if (objType != this.type)
+            {
+                writer.WriteType(objType);
+
+                var es3Type = ES3TypeMgr.GetOrCreateES3Type(objType);
+                if (es3Type is ES3UnityObjectType)
+                    ((ES3UnityObjectType)es3Type).WriteObject(obj, writer, mode);
+                else
+                    es3Type.Write(obj, writer);
+
+                return true;
+            }
+            return false;
+        }
+    }
 }
