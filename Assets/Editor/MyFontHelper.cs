@@ -2,7 +2,6 @@
 using UnityEditor;
 using System.Linq;
 using UnityEngine.UI;
-using Unity.Linq;
 using UnityEditor.SceneManagement;
 
 [CreateAssetMenu(fileName = "FontHelper", menuName = "FontHelper")]
