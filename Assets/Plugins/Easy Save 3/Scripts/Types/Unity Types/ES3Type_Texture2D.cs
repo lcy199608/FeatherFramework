@@ -9,11 +9,11 @@ namespace ES3Types
 	{
 		public static ES3Type Instance = null;
 
-		public ES3Type_Texture2D() : base(typeof(UnityEngine.Texture2D)){ Instance = this; }
+		public ES3Type_Texture2D() : base(typeof(Texture2D)){ Instance = this; }
 
         protected override void WriteUnityObject(object obj, ES3Writer writer)
         {
-            var instance = (UnityEngine.Texture2D)obj;
+            var instance = (Texture2D)obj;
 
             if (!IsReadable(instance))
             {
@@ -34,7 +34,16 @@ namespace ES3Types
 
 		protected override void ReadUnityObject<T>(ES3Reader reader, object obj)
 		{
-			var instance = (UnityEngine.Texture2D)obj;
+            if (obj == null)
+                return;
+
+            if (obj.GetType() == typeof(RenderTexture))
+            {
+                ES3Type_RenderTexture.Instance.ReadInto<T>(reader, obj);
+                return;
+            }
+
+			var instance = (Texture2D)obj;
 
             if (!IsReadable(instance))
                 ES3Internal.ES3Debug.LogWarning("Easy Save cannot load the properties or pixels for this Texture because it is not read/write enabled, so it will be loaded by reference. To load the properties and pixels for this Texture, check the 'Read/Write Enabled' checkbox in its Import Settings.", instance);
@@ -80,7 +89,7 @@ namespace ES3Types
                             }
                             catch(Exception e)
                             {
-                                Debug.LogError("Easy Save encountered an error when trying to load this Texture, please see the end of this messasge for the error. This is most likely because the Texture format of the instance we are loading into is different to the Texture we saved.\n"+e.ToString(), instance);
+                                ES3Internal.ES3Debug.LogError("Easy Save encountered an error when trying to load this Texture, please see the end of this messasge for the error. This is most likely because the Texture format of the instance we are loading into is different to the Texture we saved.\n"+e.ToString(), instance);
                             }
                         }
 						break;
@@ -104,7 +113,7 @@ namespace ES3Types
         protected bool IsReadable(Texture2D instance)
         {
             #if UNITY_2018_3_OR_NEWER
-            return instance.isReadable;
+            return instance != null && instance.isReadable;
             #else
             return true;
             #endif
@@ -115,7 +124,7 @@ namespace ES3Types
 	{
 		public static ES3Type Instance;
 
-		public ES3Type_Texture2DArray() : base(typeof(UnityEngine.Texture2D[]), ES3Type_Texture2D.Instance)
+		public ES3Type_Texture2DArray() : base(typeof(Texture2D[]), ES3Type_Texture2D.Instance)
 		{
 			Instance = this;
 		}

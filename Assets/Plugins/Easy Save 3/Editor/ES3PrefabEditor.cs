@@ -25,16 +25,13 @@ public class ES3PrefabEditor : Editor
 			es3Prefab.prefabId =  EditorGUILayout.LongField("Prefab ID", es3Prefab.prefabId);
 			EditorGUILayout.LabelField("Reference count", es3Prefab.localRefs.Count.ToString());
 			EditorGUI.indentLevel--;
-		}
 
-        if (Application.productName == "ES3 Development")
-        {
-            EditorGUILayout.LabelField("Local refs foldout is only shown");
-            EditorGUILayout.LabelField("in the ES3 Development project");
             openLocalRefs = EditorGUILayout.Foldout(openLocalRefs, "localRefs");
             if (openLocalRefs)
             {
                 EditorGUI.indentLevel++;
+
+                EditorGUILayout.LabelField("It is not recommended to manually modify these.");
 
                 foreach (var kvp in es3Prefab.localRefs)
                 {

@@ -46,7 +46,16 @@ namespace ES3Internal
 		/// <summary>The error code relating to the error, if one occurred. If it's a server error, this will return the HTTP error code.</summary>
 		public long errorCode = 0;
 
-		#endregion
+        public static bool IsNetworkError(UnityWebRequest www)
+        {
+#if UNITY_2020_1_OR_NEWER
+            return www.result == UnityWebRequest.Result.ConnectionError;
+#else
+            return www.isNetworkError;
+#endif
+        }
+
+#endregion
 
 		protected ES3WebClass(string url, string apiKey)
 		{
@@ -54,7 +63,7 @@ namespace ES3Internal
 			this.apiKey = apiKey;
 		}
 
-		#region Other Methods
+#region Other Methods
 
 		/// <summary>Adds POST data to any requests sent by this ES3Cloud object. Use this if you are sending data to a custom script on your server.</summary>
 		/// <param name="fieldName">The name of the POST field we want to add.</param>
@@ -64,9 +73,9 @@ namespace ES3Internal
 			formData.Add(new KeyValuePair<string, string>(fieldName, value));
 		}
 
-		#endregion
+#endregion
 
-		#region Internal Methods
+#region Internal Methods
 
 		protected string GetUser(string user, string password)
 		{
@@ -76,9 +85,9 @@ namespace ES3Internal
 			if(!string.IsNullOrEmpty(password))
 				user += password;
 
-			#if !DISABLE_ENCRYPTION && !DISABLE_HASHING
+#if !DISABLE_ENCRYPTION && !DISABLE_HASHING
 			user = ES3Internal.ES3Hash.SHA1Hash(user);
-			#endif
+#endif
 			return user;
 		}
 
@@ -93,11 +102,7 @@ namespace ES3Internal
 		/* Checks if an error occurred and sets relevant details, and returns true if an error did occur */
 		protected bool HandleError(UnityWebRequest webRequest, bool errorIfDataIsDownloaded)
 		{
-			#if UNITY_5
-			if(webRequest.isError)
-			#else
-			if(webRequest.isNetworkError) // isError was renamed to isNetworkError in Unity 2017.
-			#endif
+			if(IsNetworkError(webRequest))
 			{
 				errorCode = 1;
 				error = "Error: " + webRequest.error;
@@ -123,11 +128,11 @@ namespace ES3Internal
 		protected IEnumerator SendWebRequest(UnityWebRequest webRequest)
 		{
 			_webRequest = webRequest;
-			#if !UNITY_2017_2_OR_NEWER
+#if !UNITY_2017_2_OR_NEWER
 			yield return webRequest.Send();
-			#else
+#else
 			yield return webRequest.SendWebRequest();
-			#endif
+#endif
 		}
 
 		protected virtual void Reset()
@@ -138,6 +143,6 @@ namespace ES3Internal
 		}
 
 
-		#endregion
+#endregion
 	}
 }

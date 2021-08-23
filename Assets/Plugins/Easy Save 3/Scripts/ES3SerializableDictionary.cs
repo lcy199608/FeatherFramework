@@ -35,13 +35,17 @@ namespace ES3Internal
 		// load dictionary from lists
 		public void OnAfterDeserialize()
 		{
-			this.Clear();
+            // There are some situations where Unity will not get the serialized data correctly, returning null.
+            // In this case we don't want to change anything, otherwise we'll lose the data entirely.
+            if (_Keys == null || _Values == null)
+                return;
 
 			if(_Keys.Count != _Values.Count)
 				throw new System.Exception(string.Format("Key count is different to value count after deserialising dictionary."));
 
+            this.Clear();
 
-			for(int i = 0; i < _Keys.Count; i++)
+            for (int i = 0; i < _Keys.Count; i++)
 			{
                 if (_Keys[i] != null)
                 {
