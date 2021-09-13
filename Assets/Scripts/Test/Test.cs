@@ -20,21 +20,19 @@ public class Test : SingletonMono<Test>
             UIMgr.Instance.GetUI<TestPanel>().Test(10);
         }
 
-        if (GUILayout.Button("RemoveS"))
+        if (GUILayout.Button("RemoveSpecifiedUI"))
         {
             UIMgr.Instance.RemoveSpecifiedUI<TestPanel>();
         }
 
-        if (GUILayout.Button("RemoveP"))
+        if (GUILayout.Button("ClearPanelDic"))
         {
             UIMgr.Instance.ClearPanelDic();
         }
 
-        if (GUILayout.Button("RemoveC"))
+        if (GUILayout.Button("ClearAllCache"))
         {
             UIMgr.Instance.ClearAllCache();
         }
-        GameObject go = null;
-        go.Show();
     }
 }

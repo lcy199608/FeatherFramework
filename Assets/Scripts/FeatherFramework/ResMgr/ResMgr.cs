@@ -10,11 +10,7 @@ public class ResMgr : Singleton<ResMgr>
     {
         T res = Resources.Load<T>(name);
 
-        //如果是GameObject省去创建
-        if (res is GameObject)
-            return GameObject.Instantiate(res);
-        else
-            return res;
+        return res;
     }
 
     //异步加载资源
@@ -29,9 +25,6 @@ public class ResMgr : Singleton<ResMgr>
         ResourceRequest r = Resources.LoadAsync(name);
         yield return r;
 
-        if (r.asset is GameObject)
-            callback(GameObject.Instantiate(r.asset) as T);
-        else
-            callback(r.asset as T);
+        callback(r.asset as T);
     }
 }

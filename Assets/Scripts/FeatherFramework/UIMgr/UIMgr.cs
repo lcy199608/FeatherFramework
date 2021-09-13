@@ -58,7 +58,7 @@ public class UIMgr : SingletonMono<UIMgr>
 
             if (UICanvas == null)
             {
-                UICanvas = ResMgr.Instance.Load<GameObject>(uiPath + "UICanvas");
+                UICanvas = Instantiate(ResMgr.Instance.Load<GameObject>(uiPath + "UICanvas"));
                 Transform canvas = UICanvas.transform;
                 GameObject.DontDestroyOnLoad(UICanvas);
                 bot = canvas.Find("BottomLayer");
@@ -77,7 +77,7 @@ public class UIMgr : SingletonMono<UIMgr>
             }
             else
             {
-                cache = Resources.Load<GameObject>(uiPath + uiName);
+                cache = ResMgr.Instance.Load<GameObject>(uiPath + uiName);
                 panelCacheDic.Add(uiName, cache); //缓存UI
             }
 
@@ -104,7 +104,7 @@ public class UIMgr : SingletonMono<UIMgr>
         if (UICanvas == null)
         {
             //同步方式加载Canvas，过场景后不删除Canvas
-            UICanvas = ResMgr.Instance.Load<GameObject>(uiPath + "UICanvas");
+            UICanvas = Instantiate(ResMgr.Instance.Load<GameObject>(uiPath + "UICanvas"));
             Transform canvas = UICanvas.transform;
             GameObject.DontDestroyOnLoad(UICanvas);
             //获取Canvas中的各个层级
@@ -137,19 +137,17 @@ public class UIMgr : SingletonMono<UIMgr>
             }
             else
             {
-                var a = Resources.LoadAsync<GameObject>(uiPath + uiName);
-                a.completed += _ =>
+                ResMgr.Instance.LoadAsync<GameObject>(uiPath + uiName,_ => 
                 {
-                    var obj = a.asset as GameObject;
-                    panelCacheDic.Add(uiName, obj); //缓存UI
+                    panelCacheDic.Add(uiName, _); //缓存UI
 
-                    var panelTemp = Instantiate(obj);
+                    var panelTemp = Instantiate(_);
                     var panel = panelTemp.GetComponent<T>() as BasePanel;
                     panel.Init();
 
                     InitShowUI<T>(panelTemp, layer);
                     panelDic.Add(uiName, panelTemp);
-                }; 
+                });
             }
         }
     }

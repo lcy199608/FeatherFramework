@@ -28,13 +28,13 @@ public class AudioMgr : SingletonMono<AudioMgr>
     float vol;
     float effectVol;
 
-    public float Vol
+    private float Vol
     {
         get { return vol; }
         set { vol = value; }
     }
 
-    public float EffectVol
+    private float EffectVol
     {
         get { return effectVol; }
         set { effectVol = value; }
@@ -166,7 +166,7 @@ public class AudioMgr : SingletonMono<AudioMgr>
     }
 
     // 改变音量
-    public void ChangeVolume(float v)
+    public void ChangeBGVolume(float v)
     {
         Vol = v;
         audioTypes?.Where(_ => _.Value == AudioType.BG).ToList().ForEach(_ => _.Key.volume = v);
@@ -178,10 +178,10 @@ public class AudioMgr : SingletonMono<AudioMgr>
         audioTypes?.Where(_ => _.Value == AudioType.EFFECT).ToList().ForEach(_ => _.Key.volume = v);
     }
 
-    public void Mute()
+    public void MuteBG()
     {
         if (Vol != 0)
-            ChangeVolume(0);
+            ChangeBGVolume(0);
         Save();
     }
 
