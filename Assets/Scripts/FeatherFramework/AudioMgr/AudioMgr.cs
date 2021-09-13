@@ -150,7 +150,7 @@ public class AudioMgr : SingletonMono<AudioMgr>
     }
 
     // 停止某个循环的音频
-    public void StopAudio(string clipName, float fadeTime)
+    public void StopAudio(string clipName, float fadeTime = 0)
     {
         allAudioSources.Where(_ => _.clip.name == clipName).ToList().ForEach(_ =>
         {
