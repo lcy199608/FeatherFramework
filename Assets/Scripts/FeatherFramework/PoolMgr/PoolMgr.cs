@@ -72,7 +72,7 @@ public class PoolMgr : Singleton<PoolMgr>
             //外面传一个预设体的路径和名字，我内部就去加载它
             ResMgr.Instance.LoadAsync<GameObject>(name, o => {
                 o.name = name;
-                callback(o);
+                callback(GameObject.Instantiate(o));
             });
         }
     }
