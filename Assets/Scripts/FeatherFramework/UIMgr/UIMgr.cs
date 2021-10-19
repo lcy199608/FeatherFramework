@@ -247,7 +247,11 @@ public class UIMgr : SingletonMono<UIMgr>
     //销毁所有UI实例
     public void ClearPanelDic()
     {
-        panelDic.Values.ToList().ForEach(_ => _.Destroy());
+        var v = panelDic.Values;
+        for (int i = 0; i < v.Count; i++)
+        {
+            Destroy(v.ElementAt(i));
+        }
         panelDic.Clear();
     }
 
