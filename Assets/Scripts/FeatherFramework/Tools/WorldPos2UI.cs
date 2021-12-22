@@ -45,7 +45,7 @@ public class WorldPos2UI : SingletonMono<WorldPos2UI>
 
         Vector2 pos = Camera.main.WorldToScreenPoint(worldPos);
         Vector2 point;
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(transform.parent as RectTransform, pos, canvas.worldCamera, out point))
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas.transform as RectTransform, pos, canvas.worldCamera, out point))
         {
             return point;
         }
