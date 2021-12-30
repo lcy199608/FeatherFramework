@@ -43,7 +43,17 @@ public class AudioMgr : SingletonMono<AudioMgr>
     private void Awake()
     {
         vol = PlayerPrefs.GetFloat(volFile, 1.0f);
-        effectVol = PlayerPrefs.GetFloat(effectVolFile, 0.7f);
+        effectVol = PlayerPrefs.GetFloat(effectVolFile, 1.0f);
+    }
+
+    public float GetBGVol()
+    {
+        return PlayerPrefs.GetFloat(volFile, 1.0f); ;
+    }
+
+    public float GetEffectVol()
+    {
+        return PlayerPrefs.GetFloat(effectVolFile, 1.0f);
     }
 
     // 播放音效
@@ -195,6 +205,16 @@ public class AudioMgr : SingletonMono<AudioMgr>
     public void Save()
     {
         PlayerPrefs.SetFloat(volFile, Vol);
+        PlayerPrefs.SetFloat(effectVolFile, EffectVol);
+    }
+
+    public void SaveBGVolume()
+    {
+        PlayerPrefs.SetFloat(volFile, Vol);
+    }
+
+    public void SaveEffectVolume()
+    {
         PlayerPrefs.SetFloat(effectVolFile, EffectVol);
     }
 }
