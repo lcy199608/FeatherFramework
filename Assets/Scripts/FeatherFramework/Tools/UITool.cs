@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class UILookAt : Singleton<UILookAt>
+public class UITool : Singleton<UITool>
 {
     //参数分别为：1.UI修改目标的Transform		2.朝向向量		3.起始向量
     public void LookAt(Transform transform, Vector3 dir, Vector3 lookAxis)
