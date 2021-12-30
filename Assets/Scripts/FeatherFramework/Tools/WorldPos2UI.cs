@@ -5,7 +5,19 @@ using UnityEngine;
 public class WorldPos2UI : SingletonMono<WorldPos2UI>
 {
     Canvas canvas;
-    Dictionary<RectTransform, Transform> followsDic = new Dictionary<RectTransform, Transform>(); //key = UI对象，value = 目标对象
+    Dictionary<RectTransform, TransInfo> followsDic = new Dictionary<RectTransform, TransInfo>(); //key = UI对象，value = 目标对象
+
+    struct TransInfo
+    {
+        public Transform target;
+        public Vector3 offset;
+
+        public TransInfo(Transform target, Vector3 offset)
+        {
+            this.target = target;
+            this.offset = offset;
+        }
+    }
 
     void Update()
     {
@@ -14,19 +26,19 @@ public class WorldPos2UI : SingletonMono<WorldPos2UI>
 
         foreach (var item in followsDic.Keys)
         {
-            item.anchoredPosition = World2UIPos(followsDic[item].position);
+            item.anchoredPosition = World2UIPos(followsDic[item].target.position + followsDic[item].offset);
         }
     }
 
-    public void AddFollow(RectTransform followTrans,Transform targetTrans)
+    public void AddFollow(RectTransform followTrans, Transform targetTrans, Vector3 offset = default)
     {
         if (followsDic.ContainsKey(followTrans))
         {
-            followsDic[followTrans] = targetTrans;
+            followsDic[followTrans] = new TransInfo(targetTrans, offset);
         }
         else
         {
-            followsDic.Add(followTrans, targetTrans);
+            followsDic.Add(followTrans, new TransInfo(targetTrans, offset));
         }
     }
 
@@ -38,7 +50,7 @@ public class WorldPos2UI : SingletonMono<WorldPos2UI>
         }
     }
 
-    Vector3 World2UIPos(Vector3 worldPos)
+    public Vector3 World2UIPos(Vector3 worldPos)
     {
         if (canvas == null)
             canvas = GameObject.Find("UICanvas(Clone)").GetComponent<Canvas>();

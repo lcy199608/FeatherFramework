@@ -47,6 +47,12 @@ public class PoolData
 
         return obj;
     }
+
+    //    //新增ins模式
+    //    public PoolData(Transform parent)
+    //    {
+    //        poolList = new List<GameObject>() { };
+    //    }
 }
 
 
@@ -95,6 +101,24 @@ public class PoolMgr : Singleton<PoolMgr>
         else
         {
             pool1Dic.Add(name, new PoolData(obj, poolObj) { });
+        }
+    }
+
+    //通过ins取得游戏物体
+    public void GetInsObj(GameObject obj, UnityAction<GameObject> callback)
+    {
+        if (pool1Dic.ContainsKey(obj.name) && pool1Dic[obj.name].poolList.Count > 0)
+        {
+            //拖过委托返回给外部，让外部进行使用
+            var o = pool1Dic[obj.name].GetObj();
+            o.transform.parent = obj.transform.parent;
+            callback(o);
+        }
+        else
+        {
+            var o = GameObject.Instantiate(obj, obj.transform.parent);
+            o.name = obj.name;
+            callback(o);
         }
     }
 
