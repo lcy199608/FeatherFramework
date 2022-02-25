@@ -59,6 +59,7 @@ public class UIMgr : SingletonMono<UIMgr>
             if (UICanvas == null)
             {
                 UICanvas = Instantiate(ResMgr.Instance.Load<GameObject>(uiPath + "UICanvas"));
+                UICanvas.name = "UICanvas";
                 Transform canvas = UICanvas.transform;
                 GameObject.DontDestroyOnLoad(UICanvas);
                 bot = canvas.Find("BottomLayer");
