@@ -115,20 +115,23 @@ public class AutoBuild
             foreach (Transform itemtran in mainNode)
             {
                 //识别变量类型
-                string typeStr = dicUIType[dicUIType.Keys.First(_ => itemtran.name.Contains(_))];
+                string keyStr = dicUIType.Keys.First(_ => itemtran.name.Contains(_));
+                string typeStr = dicUIType[keyStr];
+
+                var name = itemtran.name.Replace(keyStr, keyStr.ToLower());
 
                 //变量声明
-                memberstring += "private " + typeStr + " " + itemtran.name + " = null;\r\n\t";
+                memberstring += "private " + typeStr + " " + name + " = null;\r\n\t";
 
                 //查找语句
-                loadedcontant += itemtran.name + " = " + "transform.Find(\"" + nodePathList[itemtran.name] + "\").GetComponent<" + typeStr + ">();\r\n\t\t";
+                loadedcontant += name + " = " + "transform.Find(\"" + nodePathList[itemtran.name] + "\").GetComponent<" + typeStr + ">();\r\n\t\t";
 
                 #region 自动添加组件
                 //把忘记添加组件的自动加上
                 switch (typeStr)
                 {
                     case "Image":
-                        if(itemtran.GetComponent<Image>() == null)
+                        if (itemtran.GetComponent<Image>() == null)
                         {
                             itemtran.gameObject.AddComponent<Image>();
                             EditorUtility.SetDirty(itemtran.gameObject);
@@ -167,7 +170,7 @@ public class AutoBuild
                         }
                         break;
 
-                    default :
+                    default:
                         break;
                 }
                 #endregion
