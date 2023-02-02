@@ -17,7 +17,7 @@ public class PoolData
         fatherObj = new GameObject(obj.name);
         fatherObj.transform.parent = poolObj.transform;
 
-        poolList = new List<GameObject>() { };
+        poolList = new List<GameObject>();
 
         PushObj(obj);
     }
@@ -47,14 +47,7 @@ public class PoolData
 
         return obj;
     }
-
-    //    //新增ins模式
-    //    public PoolData(Transform parent)
-    //    {
-    //        poolList = new List<GameObject>() { };
-    //    }
 }
-
 
 public class PoolMgr : Singleton<PoolMgr>
 {
@@ -84,7 +77,7 @@ public class PoolMgr : Singleton<PoolMgr>
     }
 
     //外界返还游戏物体
-    public void PushObj(string name, GameObject obj)
+    public void PushObj(GameObject obj)
     {
         if (poolObj == null)
         {
@@ -93,19 +86,19 @@ public class PoolMgr : Singleton<PoolMgr>
 
         }
         //里面有记录这个键
-        if (pool1Dic.ContainsKey(name))
+        if (pool1Dic.ContainsKey(obj.name))
         {
-            pool1Dic[name].PushObj(obj);
+            pool1Dic[obj.name].PushObj(obj);
         }
         //未曾记录这个键
         else
         {
-            pool1Dic.Add(name, new PoolData(obj, poolObj) { });
+            pool1Dic.Add(obj.name, new PoolData(obj, poolObj));
         }
     }
 
-    //通过ins取得游戏物体
-    public void GetInsObj(GameObject obj, UnityAction<GameObject> callback)
+    //通过传入GameObject取得游戏物体
+    public void GetCloneObj(GameObject obj, UnityAction<GameObject> callback)
     {
         if (pool1Dic.ContainsKey(obj.name) && pool1Dic[obj.name].poolList.Count > 0)
         {
