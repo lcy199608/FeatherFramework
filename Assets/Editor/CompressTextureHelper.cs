@@ -30,7 +30,7 @@ public class CompressTextureHelper : EditorWindow
     private bool isWebGL;
 
     private int quality;
-    private TextureImporterFormat format = TextureImporterFormat.ASTC_RGB_6x6;
+    private TextureImporterFormat format = TextureImporterFormat.ASTC_6x6;
 
     private TextureImporterPlatformSettings settings;
 
