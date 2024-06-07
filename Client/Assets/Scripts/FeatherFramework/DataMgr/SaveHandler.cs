@@ -40,7 +40,7 @@ public static class SaveHandler
 
         existTempDataSlotSet = GetSystemData(EXIST_TEMP_SLOT_TITLE, new HashSet<int>());
 
-        Debug.Log("Init Success");
+        Debug.Log("Game Data Init Success");
     }
 
     // 加载数据

@@ -1,0 +1,201 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\UnityProject\\FeatherFramework\\Client\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{5544F79C-5306-909F-C855-53D6959D5DFD}|Assembly-CSharp-Editor.csproj|d:\\unityproject\\featherframework\\client\\assets\\editor\\exceltool.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5544F79C-5306-909F-C855-53D6959D5DFD}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\exceltool.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|D:\\UnityProject\\FeatherFramework\\Client\\assets\\scripts\\featherframework\\scenemgr\\scenemgr.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\featherframework\\scenemgr\\scenemgr.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|D:\\UnityProject\\FeatherFramework\\Client\\assets\\scripts\\featherframework\\config\\configsystem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\featherframework\\config\\configsystem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|D:\\UnityProject\\FeatherFramework\\Client\\assets\\scripts\\featherframework\\datamgr\\savehandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\featherframework\\datamgr\\savehandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|D:\\UnityProject\\FeatherFramework\\Client\\assets\\scripts\\test.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\test.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|D:\\UnityProject\\FeatherFramework\\Client\\assets\\scripts\\featherframework\\gamemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\featherframework\\gamemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|D:\\UnityProject\\FeatherFramework\\Client\\assets\\gen\\item.tbitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|solutionrelative:assets\\gen\\item.tbitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|D:\\UnityProject\\FeatherFramework\\Client\\assets\\gen\\tables.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|solutionrelative:assets\\gen\\tables.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|D:\\UnityProject\\FeatherFramework\\Client\\assets\\gen\\equality.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|solutionrelative:assets\\gen\\equality.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|D:\\UnityProject\\FeatherFramework\\Client\\assets\\gen\\item.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|solutionrelative:assets\\gen\\item.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|D:\\UnityProject\\FeatherFramework\\Client\\assets\\gen\\item.itemexchange.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12F44184-A422-5F27-22E6-507969043F15}|Assembly-CSharp.csproj|solutionrelative:assets\\gen\\item.itemexchange.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "SaveHandler.cs",
+              "DocumentMoniker": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Scripts\\FeatherFramework\\DataMgr\\SaveHandler.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\FeatherFramework\\DataMgr\\SaveHandler.cs",
+              "ToolTip": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Scripts\\FeatherFramework\\DataMgr\\SaveHandler.cs",
+              "RelativeToolTip": "Assets\\Scripts\\FeatherFramework\\DataMgr\\SaveHandler.cs",
+              "ViewState": "AQIAAA4AAAAAAAAAAAAtwB8AAAAJAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-07T09:25:28.992Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ConfigSystem.cs",
+              "DocumentMoniker": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Scripts\\FeatherFramework\\Config\\ConfigSystem.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\FeatherFramework\\Config\\ConfigSystem.cs",
+              "ToolTip": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Scripts\\FeatherFramework\\Config\\ConfigSystem.cs",
+              "RelativeToolTip": "Assets\\Scripts\\FeatherFramework\\Config\\ConfigSystem.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA4AAAApAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-07T09:14:06.223Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ExcelTool.cs",
+              "DocumentMoniker": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Editor\\ExcelTool.cs",
+              "RelativeDocumentMoniker": "Assets\\Editor\\ExcelTool.cs",
+              "ToolTip": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Editor\\ExcelTool.cs",
+              "RelativeToolTip": "Assets\\Editor\\ExcelTool.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABIAAAAgAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-07T06:44:57.988Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "SceneMgr.cs",
+              "DocumentMoniker": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Scripts\\FeatherFramework\\SceneMgr\\SceneMgr.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\FeatherFramework\\SceneMgr\\SceneMgr.cs",
+              "ToolTip": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Scripts\\FeatherFramework\\SceneMgr\\SceneMgr.cs",
+              "RelativeToolTip": "Assets\\Scripts\\FeatherFramework\\SceneMgr\\SceneMgr.cs",
+              "ViewState": "AQIAAAsAAAAAAAAAAAAowAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-07T08:33:29.789Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Test.cs",
+              "DocumentMoniker": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Scripts\\Test.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Test.cs",
+              "ToolTip": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Scripts\\Test.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Test.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA4AAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-07T08:30:41.806Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "GameManager.cs",
+              "DocumentMoniker": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Scripts\\FeatherFramework\\GameManager.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\FeatherFramework\\GameManager.cs",
+              "ToolTip": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Scripts\\FeatherFramework\\GameManager.cs",
+              "RelativeToolTip": "Assets\\Scripts\\FeatherFramework\\GameManager.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAUAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-07T08:21:46.168Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "item.TbItem.cs",
+              "DocumentMoniker": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Gen\\item.TbItem.cs",
+              "RelativeDocumentMoniker": "Assets\\Gen\\item.TbItem.cs",
+              "ToolTip": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Gen\\item.TbItem.cs",
+              "RelativeToolTip": "Assets\\Gen\\item.TbItem.cs",
+              "ViewState": "AQIAABQAAAAAAAAAAAAowBAAAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-07T08:19:03.606Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Tables.cs",
+              "DocumentMoniker": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Gen\\Tables.cs",
+              "RelativeDocumentMoniker": "Assets\\Gen\\Tables.cs",
+              "ToolTip": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Gen\\Tables.cs",
+              "RelativeToolTip": "Assets\\Gen\\Tables.cs",
+              "ViewState": "AQIAAAQAAAAAAAAAAAAlwBMAAAARAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-07T07:32:18.904Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "EQuality.cs",
+              "DocumentMoniker": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Gen\\EQuality.cs",
+              "RelativeDocumentMoniker": "Assets\\Gen\\EQuality.cs",
+              "ToolTip": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Gen\\EQuality.cs",
+              "RelativeToolTip": "Assets\\Gen\\EQuality.cs",
+              "ViewState": "AQIAAAYAAAAAAAAAAAAAAA0AAAAYAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-07T07:10:18.475Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Item.cs",
+              "DocumentMoniker": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Gen\\Item.cs",
+              "RelativeDocumentMoniker": "Assets\\Gen\\Item.cs",
+              "ToolTip": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Gen\\Item.cs",
+              "RelativeToolTip": "Assets\\Gen\\Item.cs",
+              "ViewState": "AQIAAA8AAAAAAAAAAAAAAAoAAAARAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-07T07:06:05.646Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "item.ItemExchange.cs",
+              "DocumentMoniker": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Gen\\item.ItemExchange.cs",
+              "RelativeDocumentMoniker": "Assets\\Gen\\item.ItemExchange.cs",
+              "ToolTip": "D:\\UnityProject\\FeatherFramework\\Client\\Assets\\Gen\\item.ItemExchange.cs",
+              "RelativeToolTip": "Assets\\Gen\\item.ItemExchange.cs",
+              "ViewState": "AQIAAAkAAAAAAAAAAIA0wBsAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-06-07T07:05:34.649Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
