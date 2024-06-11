@@ -13,20 +13,17 @@ namespace cfg
 {
 public partial class Tables
 {
-    public item.TbItem TbItem {get; }
-    public test.TbReward TbReward {get; }
+    public Language Language {get; }
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
-        TbItem = new item.TbItem(loader("item_tbitem"));
-        TbReward = new test.TbReward(loader("test_tbreward"));
+        Language = new Language(loader("language"));
         ResolveRef();
     }
     
     private void ResolveRef()
     {
-        TbItem.ResolveRef(this);
-        TbReward.ResolveRef(this);
+        Language.ResolveRef(this);
     }
 }
 

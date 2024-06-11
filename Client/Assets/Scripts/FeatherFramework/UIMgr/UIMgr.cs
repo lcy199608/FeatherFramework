@@ -255,10 +255,9 @@ public class UIMgr : SingletonMono<UIMgr>
         panelDic.Clear();
     }
 
-    //清理所有缓存，除非UI缓存太多不然尽量不要用
+    //清理所有缓存
     public void ClearAllCache()
     {
         panelCacheDic.Clear();
-        Resources.UnloadUnusedAssets();
     }
 }

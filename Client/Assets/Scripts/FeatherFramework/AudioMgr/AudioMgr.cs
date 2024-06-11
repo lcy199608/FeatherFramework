@@ -8,7 +8,7 @@ using UnityEngine.Events;
 
 public enum AudioType
 {
-    BG,
+    BGM,
     EFFECT
 }
 
@@ -16,138 +16,128 @@ public class AudioMgr : SingletonMono<AudioMgr>
 {
     const string path = "Audios/";
 
-    const string volFile = "VolFile";
-    const string effectVolFile = "EffectVolFile";
+    const string volFile = "BGMVolSaveData";
+    const string effectVolFile = "EffectVolSaveData";
 
     private AudioSource tempAudio;
-    private List<AudioClip> audios = new List<AudioClip>();
-    private List<AudioSource> allAudioSources = new List<AudioSource>();
+    private Dictionary<AudioSource, AudioType> audioSources = new Dictionary<AudioSource, AudioType>();
 
-    private Dictionary<AudioSource, AudioType> audioTypes = new Dictionary<AudioSource, AudioType>();
-
-    float vol;
+    float bmgVol;
     float effectVol;
 
-    private float Vol
+    private float BGMVol
     {
-        get { return vol; }
-        set { vol = value; }
+        get { return bmgVol; }
+        set 
+        {
+            if(value != BGMVol) 
+            {
+                bmgVol = value;
+                ChangeBGMVolume(BGMVol);
+            }
+        }
     }
 
     private float EffectVol
     {
         get { return effectVol; }
-        set { effectVol = value; }
+        set 
+        {
+            if(value != EffectVol)
+            {
+                effectVol = value;
+                ChangeEffectVolume(EffectVol);
+            }
+        }
     }
 
-    private void Awake()
+    public AudioMgr()
     {
-        vol = PlayerPrefs.GetFloat(volFile, 1.0f);
-        effectVol = PlayerPrefs.GetFloat(effectVolFile, 1.0f);
-    }
-
-    public float GetBGVol()
-    {
-        return PlayerPrefs.GetFloat(volFile, 1.0f); ;
-    }
-
-    public float GetEffectVol()
-    {
-        return PlayerPrefs.GetFloat(effectVolFile, 1.0f);
+        BGMVol = SaveHandler.GetSystemData(volFile, 1.0f);
+        EffectVol = SaveHandler.GetSystemData(effectVolFile, 1.0f);
     }
 
     // 播放音效
     public void PlayAudio(string clipName, AudioType type, float fadeTime = 0, float delayTime = 0)
     {
-        GetAudioClip(clipName, _ => {
+        GetAudioClip(clipName, clip => {
             tempAudio = GetAudioSource();
             tempAudio.volume = 0;
-            tempAudio.clip = _;
+            tempAudio.clip = clip;
             tempAudio.loop = false;
 
-            if (audioTypes.ContainsKey(tempAudio))
+            if (audioSources.ContainsKey(tempAudio))
             {
-                audioTypes[tempAudio] = type;
+                audioSources[tempAudio] = type;
             }
             else
             {
-                audioTypes.Add(tempAudio, type);
+                audioSources.Add(tempAudio, type);
             }
 
             tempAudio.PlayDelayed(delayTime);
             switch (type)
             {
-                case AudioType.BG:
-                    tempAudio.DOFade(Vol, fadeTime).SetDelay(delayTime).Restart();
+                case AudioType.BGM:
+                    tempAudio.DOFade(BGMVol, fadeTime).SetDelay(delayTime).Restart();
                     break;
                 case AudioType.EFFECT:
-                    tempAudio.DOFade(effectVol, fadeTime).SetDelay(delayTime).Restart();
+                    tempAudio.DOFade(EffectVol, fadeTime).SetDelay(delayTime).Restart();
                     break;
             }
-            allAudioSources.Add(tempAudio);
         });
     }
 
     // 播放循环音频
     public void PlayLoopAudio(string clipName, AudioType type, float fadeTime = 0, float delayTime = 0)
     {
-        GetAudioClip(clipName, _ => {
+        GetAudioClip(clipName, clip => {
             tempAudio = GetAudioSource();
             tempAudio.volume = 0;
-            tempAudio.clip = _;
+            tempAudio.clip = clip;
             tempAudio.loop = true;
 
-            if (audioTypes.ContainsKey(tempAudio))
+            if (audioSources.ContainsKey(tempAudio))
             {
-                audioTypes[tempAudio] = type;
+                audioSources[tempAudio] = type;
             }
             else
             {
-                audioTypes.Add(tempAudio, type);
+                audioSources.Add(tempAudio, type);
             }
 
             tempAudio.PlayDelayed(delayTime);
 
             switch (type)
             {
-                case AudioType.BG:
-                    tempAudio.DOFade(Vol, fadeTime).SetDelay(delayTime).Restart();
+                case AudioType.BGM:
+                    tempAudio.DOFade(BGMVol, fadeTime).SetDelay(delayTime).Restart();
                     break;
                 case AudioType.EFFECT:
-                    tempAudio.DOFade(effectVol, fadeTime).SetDelay(delayTime).Restart();
+                    tempAudio.DOFade(EffectVol, fadeTime).SetDelay(delayTime).Restart();
                     break;
             }
-
-            allAudioSources.Add(tempAudio);
         });
     }
 
     // 获取音频文件
     private void GetAudioClip(string clipName, UnityAction<AudioClip> action)
     {
-        if (audios.Any(_ => _.name == clipName))
-        {
-            action(audios.First(_ => _.name == clipName));
-        }
-        else
-        {
-            action += _ => audios.Add(_);
-            ResMgr.Instance.LoadAsync(path + clipName, action);
-        }
+        ResMgr.Instance.LoadAsync(path + clipName, action);
     }
 
     // 获取AudioSource组件
     private AudioSource GetAudioSource()
     {
-        if (allAudioSources.Any(_ => !_.isPlaying))
+        var allAudioSources = audioSources.Keys;
+        foreach (var audio in allAudioSources)
         {
-            tempAudio = allAudioSources.First(_ => !_.isPlaying);
-            return tempAudio;
+            if (!audio.isPlaying)
+            {
+                return audio;
+            }
         }
-        else
-        {
-            return AddAudioSource();
-        }
+        return AddAudioSource();
     }
 
     // 增加组件
@@ -162,59 +152,81 @@ public class AudioMgr : SingletonMono<AudioMgr>
     // 停止某个循环的音频
     public void StopAudio(string clipName, float fadeTime = 0)
     {
-        allAudioSources.Where(_ => _.clip.name == clipName).ToList().ForEach(_ =>
+        var tempAudios = audioSources.Keys;
+        foreach (var audio in tempAudios)
         {
-            if (fadeTime != 0)
+            if(audio.clip.name == clipName && audio.isPlaying)
             {
-                DOTween.To(() => _.volume, x => _.volume = x, 0, fadeTime).OnComplete(() => _.Stop());
+                if (fadeTime != 0)
+                {
+                    DOTween.To(() => audio.volume, vol => audio.volume = vol, 0, fadeTime)
+                        .OnComplete(() => audio.Stop());
+                }
+                else
+                {
+                    audio.Stop();
+                }
             }
-            else
-            {
-                _.Stop();
-            }
-        });
+        }
     }
 
     // 改变音量
-    public void ChangeBGVolume(float v)
+    private void ChangeBGMVolume(float v)
     {
-        Vol = v;
-        audioTypes?.Where(_ => _.Value == AudioType.BG).ToList().ForEach(_ => _.Key.volume = v);
+        foreach (var kv in audioSources)
+        {
+            if (kv.Value == AudioType.BGM)
+            {
+                kv.Key.volume = v;
+            }
+        }
     }
 
-    public void ChangeEffectVolume(float v)
+    private void ChangeEffectVolume(float v)
     {
-        EffectVol = v;
-        audioTypes?.Where(_ => _.Value == AudioType.EFFECT).ToList().ForEach(_ => _.Key.volume = v);
+        foreach (var kv in audioSources)
+        {
+            if (kv.Value == AudioType.EFFECT)
+            {
+                kv.Key.volume = v;
+            }
+        }
     }
 
     public void MuteBG()
     {
-        if (Vol != 0)
-            ChangeBGVolume(0);
-        Save();
+        if (BGMVol != 0)
+        {
+            ChangeBGMVolume(0);
+        }
+        SaveBGMVolume();
     }
 
     public void MuteEffect()
     {
         if (EffectVol != 0)
+        {
             ChangeEffectVolume(0);
-        Save();
+        }
+        SaveEffectVolume();
     }
 
+    /// <summary>
+    /// 保存音量数据 为防止频繁写入所以没在改音量的位置直接保存
+    /// </summary>
     public void Save()
     {
-        PlayerPrefs.SetFloat(volFile, Vol);
-        PlayerPrefs.SetFloat(effectVolFile, EffectVol);
+        SaveBGMVolume();
+        SaveEffectVolume();
     }
 
-    public void SaveBGVolume()
+    public void SaveBGMVolume()
     {
-        PlayerPrefs.SetFloat(volFile, Vol);
+        SaveHandler.SetSystemData(volFile, BGMVol,true);
     }
 
     public void SaveEffectVolume()
     {
-        PlayerPrefs.SetFloat(effectVolFile, EffectVol);
+        SaveHandler.SetSystemData(effectVolFile, EffectVol, true);
     }
 }

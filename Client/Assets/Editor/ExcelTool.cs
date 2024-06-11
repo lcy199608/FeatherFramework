@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class ExcelTool : MonoBehaviour
 {
-    [MenuItem("Tools/读取配置表")]
+    [MenuItem("Tools/Excel/读取配置表")]
     private static void RunMyBatFile()
     {
         // 设置.bat文件的路径

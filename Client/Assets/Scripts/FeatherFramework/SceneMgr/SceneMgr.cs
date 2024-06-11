@@ -27,7 +27,7 @@ public class SceneMgr : Singleton<SceneMgr>
         ao.allowSceneActivation = false;
         while (!ao.isDone)
         {
-            EventCenter.Instance.EventTrigger("进度条更新", ao); //如果需要同步进度条
+            EventCenter.Instance.EventTrigger("SceneProcessUpdate", ao); //如果需要同步进度条
             yield return null;
         }
         action();

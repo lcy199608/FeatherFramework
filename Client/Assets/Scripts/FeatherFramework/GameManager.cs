@@ -11,8 +11,10 @@ public static class GameManager
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Init()
     {
+        //本地数据
         SaveHandler.Initialize();
-        SaveHandler.LoadTempData(SaveHandler.GetSystemData(GameFile, 0));
+        SaveHandler.LoadData(SaveHandler.GetSystemData(GameFile, 0));
+        //配置表
         ConfigSystem.Instance.InitConfig();
     }
 }

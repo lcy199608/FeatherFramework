@@ -22,9 +22,14 @@ public class ResMgr : Singleton<ResMgr>
     //开启异步加载
     private IEnumerator ReallyLoadAsync<T>(string name, UnityAction<T> callback) where T: Object
     {
-        ResourceRequest r = Resources.LoadAsync(name);
+        ResourceRequest r = Resources.LoadAsync<T>(name);
         yield return r;
 
         callback(r.asset as T);
+    }
+
+    public void ReleaseUnusedResources()
+    {
+        Resources.UnloadUnusedAssets();
     }
 }

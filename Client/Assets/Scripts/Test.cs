@@ -10,6 +10,6 @@ public class Test : MonoBehaviour
 {
     void Start()
     {
-        UnityEngine.Debug.LogFormat("item[1].name:{0}", ConfigSystem.Config.TbItem[10000].Name);
+        UnityEngine.Debug.LogFormat("item[1].name:{0}", ConfigSystem.Config.Language[1].English);
     }
 }

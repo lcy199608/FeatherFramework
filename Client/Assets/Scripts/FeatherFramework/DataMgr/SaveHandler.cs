@@ -44,7 +44,7 @@ public static class SaveHandler
     }
 
     // 加载数据
-    public static void LoadTempData(int SlotId)
+    public static void LoadData(int SlotId)
     {
         if (CurrentTempSlotId == null || CurrentTempSlotId != SlotId)
         {
@@ -109,7 +109,7 @@ public static class SaveHandler
     }
 
     // 存储普通数据
-    public static void SetTempData<T>(string ID, T value, bool SaveImmediately = true,int GroupID = 0)
+    public static void SetData<T>(string ID, T value, bool SaveImmediately = true,int GroupID = 0)
     {
         if (CurrentTempSlotId == null)
         {
@@ -142,7 +142,7 @@ public static class SaveHandler
     }
 
     // 获取普通数据
-    public static T GetTempData<T>(string ID, T defaultValue, int GroupId = 0)
+    public static T GetData<T>(string ID, T defaultValue, int GroupId = 0)
     {
         if (CurrentTempSlotId == null)
         {
@@ -168,7 +168,7 @@ public static class SaveHandler
         }
         else
         {
-            return GetTempData(key.ID, defaultValue, key.GroupID);
+            return GetData(key.ID, defaultValue, key.GroupID);
         }
     }
 
@@ -181,7 +181,7 @@ public static class SaveHandler
         }
         else
         {
-            SetTempData(key.ID, value, SaveImmediately, key.GroupID);
+            SetData(key.ID, value, SaveImmediately, key.GroupID);
         }
     }
 
