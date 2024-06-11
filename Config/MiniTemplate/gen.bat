@@ -7,10 +7,10 @@ set CONF_ROOT=%WORKSPACE%\DataTables
 
 dotnet %GEN_CLIENT% ^
     -t client ^
-    -c cs-simple-json ^
-    -d json  ^
+    -c cs-bin ^
+    -d bin  ^
     --conf luban.conf ^
     -x outputCodeDir=..\..\Client\Assets/Gen ^
-    -x outputDataDir=..\..\Client\GenerateDatas\json ^
+    -x outputDataDir=..\..\Client\GenerateDatas\bytes ^
 	
 pause

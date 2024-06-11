@@ -1,4 +1,5 @@
-using cfg;
+﻿using cfg;
+using Luban;
 using SimpleJSON;
 using System.Collections;
 using System.Collections.Generic;
@@ -16,8 +17,19 @@ public class ConfigSystem : Singleton<ConfigSystem>
         Debug.Log("== load config succ==");
     }
 
-    private JSONNode LoadByteBuf(string file)
+    /// <summary>
+    /// 读取JSON
+    /// </summary>
+    private JSONNode LoadJsonBuf(string file)
     {
         return JSON.Parse(File.ReadAllText(Application.dataPath + "/../GenerateDatas/json/" + file + ".json", System.Text.Encoding.UTF8));
+    }
+
+    /// <summary>
+    /// 读取BIN
+    /// </summary>
+    private ByteBuf LoadByteBuf(string file)
+    {
+        return new ByteBuf(File.ReadAllBytes($"{Application.dataPath}/../GenerateDatas/bytes/{file}.bytes"));
     }
 }

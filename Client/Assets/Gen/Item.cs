@@ -8,30 +8,29 @@
 //------------------------------------------------------------------------------
 
 using Luban;
-using SimpleJSON;
 
 
 namespace cfg
 {
 public sealed partial class Item : Luban.BeanBase
 {
-    public Item(JSONNode _buf) 
+    public Item(ByteBuf _buf) 
     {
-        { if(!_buf["id"].IsNumber) { throw new SerializationException(); }  Id = _buf["id"]; }
-        { if(!_buf["name"].IsString) { throw new SerializationException(); }  Name = _buf["name"]; }
-        { if(!_buf["desc"].IsString) { throw new SerializationException(); }  Desc = _buf["desc"]; }
-        { if(!_buf["price"].IsNumber) { throw new SerializationException(); }  Price = _buf["price"]; }
-        { if(!_buf["upgrade_to_item_id"].IsNumber) { throw new SerializationException(); }  UpgradeToItemId = _buf["upgrade_to_item_id"]; }
+        Id = _buf.ReadInt();
+        Name = _buf.ReadString();
+        Desc = _buf.ReadString();
+        Price = _buf.ReadInt();
+        UpgradeToItemId = _buf.ReadInt();
         UpgradeToItemId_Ref = null;
-        { var _j = _buf["expire_time"]; if (_j.Tag != JSONNodeType.None && _j.Tag != JSONNodeType.NullValue) { { if(!_j.IsNumber) { throw new SerializationException(); }  ExpireTime = _j; } } else { ExpireTime = null; } }
-        { if(!_buf["batch_useable"].IsBoolean) { throw new SerializationException(); }  BatchUseable = _buf["batch_useable"]; }
-        { if(!_buf["quality"].IsNumber) { throw new SerializationException(); }  Quality = (EQuality)_buf["quality"].AsInt; }
-        { if(!_buf["exchange_stream"].IsObject) { throw new SerializationException(); }  ExchangeStream = item.ItemExchange.DeserializeItemExchange(_buf["exchange_stream"]);  }
-        { var __json0 = _buf["exchange_list"]; if(!__json0.IsArray) { throw new SerializationException(); } ExchangeList = new System.Collections.Generic.List<item.ItemExchange>(__json0.Count); foreach(JSONNode __e0 in __json0.Children) { item.ItemExchange __v0;  { if(!__e0.IsObject) { throw new SerializationException(); }  __v0 = item.ItemExchange.DeserializeItemExchange(__e0);  }  ExchangeList.Add(__v0); }   }
-        { if(!_buf["exchange_column"].IsObject) { throw new SerializationException(); }  ExchangeColumn = item.ItemExchange.DeserializeItemExchange(_buf["exchange_column"]);  }
+        if(_buf.ReadBool()){ ExpireTime = _buf.ReadLong(); } else { ExpireTime = null; }
+        BatchUseable = _buf.ReadBool();
+        Quality = (EQuality)_buf.ReadInt();
+        ExchangeStream = item.ItemExchange.DeserializeItemExchange(_buf);
+        {int n0 = System.Math.Min(_buf.ReadSize(), _buf.Size);ExchangeList = new System.Collections.Generic.List<item.ItemExchange>(n0);for(var i0 = 0 ; i0 < n0 ; i0++) { item.ItemExchange _e0;  _e0 = item.ItemExchange.DeserializeItemExchange(_buf); ExchangeList.Add(_e0);}}
+        ExchangeColumn = item.ItemExchange.DeserializeItemExchange(_buf);
     }
 
-    public static Item DeserializeItem(JSONNode _buf)
+    public static Item DeserializeItem(ByteBuf _buf)
     {
         return new Item(_buf);
     }

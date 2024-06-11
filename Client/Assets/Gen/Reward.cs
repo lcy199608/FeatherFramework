@@ -8,20 +8,19 @@
 //------------------------------------------------------------------------------
 
 using Luban;
-using SimpleJSON;
 
 
 namespace cfg
 {
 public sealed partial class Reward : Luban.BeanBase
 {
-    public Reward(JSONNode _buf) 
+    public Reward(ByteBuf _buf) 
     {
-        { if(!_buf["id"].IsNumber) { throw new SerializationException(); }  Id = _buf["id"]; }
-        { if(!_buf["name"].IsString) { throw new SerializationException(); }  Name = _buf["name"]; }
+        Id = _buf.ReadInt();
+        Name = _buf.ReadString();
     }
 
-    public static Reward DeserializeReward(JSONNode _buf)
+    public static Reward DeserializeReward(ByteBuf _buf)
     {
         return new Reward(_buf);
     }

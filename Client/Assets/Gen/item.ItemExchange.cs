@@ -8,20 +8,19 @@
 //------------------------------------------------------------------------------
 
 using Luban;
-using SimpleJSON;
 
 
 namespace cfg.item
 {
 public sealed partial class ItemExchange : Luban.BeanBase
 {
-    public ItemExchange(JSONNode _buf) 
+    public ItemExchange(ByteBuf _buf) 
     {
-        { if(!_buf["id"].IsNumber) { throw new SerializationException(); }  Id = _buf["id"]; }
-        { if(!_buf["num"].IsNumber) { throw new SerializationException(); }  Num = _buf["num"]; }
+        Id = _buf.ReadInt();
+        Num = _buf.ReadInt();
     }
 
-    public static ItemExchange DeserializeItemExchange(JSONNode _buf)
+    public static ItemExchange DeserializeItemExchange(ByteBuf _buf)
     {
         return new item.ItemExchange(_buf);
     }
