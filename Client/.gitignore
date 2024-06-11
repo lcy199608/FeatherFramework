@@ -3,7 +3,7 @@
 /[Oo]bj/
 /[Bb]uild/
 /[Pp]rojectSettings/ProjectVersion.txt
-/[Gg]en/
+/GenerateDatas/
 *.csproj
 *.unityproj
 *.sln
