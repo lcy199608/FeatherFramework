@@ -17,8 +17,8 @@ public sealed partial class LanguageInfo : Luban.BeanBase
     public LanguageInfo(ByteBuf _buf) 
     {
         Id = _buf.ReadInt();
-        Chinese = _buf.ReadString();
-        ChineseTW = _buf.ReadString();
+        ChineseSimplified = _buf.ReadString();
+        ChineseTraditional = _buf.ReadString();
         English = _buf.ReadString();
         Japanese = _buf.ReadString();
         Korean = _buf.ReadString();
@@ -36,11 +36,11 @@ public sealed partial class LanguageInfo : Luban.BeanBase
     /// <summary>
     /// 简体中文
     /// </summary>
-    public readonly string Chinese;
+    public readonly string ChineseSimplified;
     /// <summary>
     /// 繁体中文
     /// </summary>
-    public readonly string ChineseTW;
+    public readonly string ChineseTraditional;
     /// <summary>
     /// 英语
     /// </summary>
@@ -71,8 +71,8 @@ public sealed partial class LanguageInfo : Luban.BeanBase
     {
         return "{ "
         + "id:" + Id + ","
-        + "Chinese:" + Chinese + ","
-        + "ChineseTW:" + ChineseTW + ","
+        + "ChineseSimplified:" + ChineseSimplified + ","
+        + "ChineseTraditional:" + ChineseTraditional + ","
         + "English:" + English + ","
         + "Japanese:" + Japanese + ","
         + "Korean:" + Korean + ","

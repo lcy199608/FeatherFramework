@@ -17,12 +17,12 @@ public class ActivationRecorderController : MonoBehaviour
     {
         if (!(activeRecorders == null))
         {
-            activeRecorders.ForEach(_ => { SaveHandler.SetValue(_.ID, true,true);_.gameObject.SetActive(true); }) ;
+            activeRecorders.ForEach(_ => { SaveDataMgr.SetValue(_.ID, true,true);_.gameObject.SetActive(true); }) ;
         }
 
         if (!(inactiveRecorders == null))
         {
-            inactiveRecorders.ForEach(_ => { SaveHandler.SetValue(_.ID, false,true);_.gameObject.SetActive(false); }) ;
+            inactiveRecorders.ForEach(_ => { SaveDataMgr.SetValue(_.ID, false,true);_.gameObject.SetActive(false); }) ;
         }
     }
 }

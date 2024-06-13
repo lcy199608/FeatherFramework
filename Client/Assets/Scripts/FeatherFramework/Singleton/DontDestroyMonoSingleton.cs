@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
-public class SingletonMono<T> : MonoBehaviour
-    where T: SingletonMono<T>
+public class DontDestroyMonoSingleton<T> : MonoBehaviour
+    where T: DontDestroyMonoSingleton<T>
 {
     const string SingletonName = "SingletonMono";
     static T instance;

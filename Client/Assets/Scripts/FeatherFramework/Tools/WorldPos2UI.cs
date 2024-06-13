@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WorldPos2UI : SingletonMono<WorldPos2UI>
+public class WorldPos2UI : DontDestroyMonoSingleton<WorldPos2UI>
 {
     Canvas canvas;
     Dictionary<RectTransform, TransInfo> followsDic = new Dictionary<RectTransform, TransInfo>(); //key = UI对象，value = 目标对象

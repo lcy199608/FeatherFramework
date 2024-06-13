@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-public class ConfigSystem : Singleton<ConfigSystem>
+public class ConfigMgr : Singleton<ConfigMgr>
 {
     public static Tables Config => config;
     private static Tables config;
@@ -14,9 +14,9 @@ public class ConfigSystem : Singleton<ConfigSystem>
     public void InitConfig()
     {
         config = new Tables(LoadByteBuf);
-        Debug.Log("== load config succ==");
+        Debug.Log("Load Config Success");
     }
-
+    
     /// <summary>
     /// 读取JSON
     /// </summary>

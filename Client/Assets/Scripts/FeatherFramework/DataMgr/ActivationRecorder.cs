@@ -19,6 +19,6 @@ public class ActivationRecorder : MonoBehaviourWithID
 
     public void CheckActivation()
     {
-        gameObject.SetActive(SaveHandler.GetValue(ID, defaultState));
+        gameObject.SetActive(SaveDataMgr.GetValue(ID, defaultState));
     }
 }

@@ -7,7 +7,7 @@ using System.Text;
 using System.IO;
 using Newtonsoft.Json;
 
-public static class SaveHandler
+public static class SaveDataMgr
 {
     const int KEY_SIZE = 256;
     const string SYS_DATA_FILE_NAME = "sys"; 

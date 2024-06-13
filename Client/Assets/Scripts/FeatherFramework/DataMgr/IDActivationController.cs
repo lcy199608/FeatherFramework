@@ -18,12 +18,12 @@ public class IDActivationController : MonoBehaviour
     {
         if (!(activeIds == null))
         {
-            activeIds.ForEach(_ => SaveHandler.SetValue(_, true,true));
+            activeIds.ForEach(_ => SaveDataMgr.SetValue(_, true,true));
         }
 
         if (!(inactiveIds == null))
         {
-            inactiveIds.ForEach(_ => SaveHandler.SetValue(_, false,true));
+            inactiveIds.ForEach(_ => SaveDataMgr.SetValue(_, false,true));
         }
     }
 }

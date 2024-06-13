@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class UIEventListenerMgr : SingletonMono<UIEventListenerMgr>
+public class UIEventListenerMgr : DontDestroyMonoSingleton<UIEventListenerMgr>
 {
     public enum EventType
     {

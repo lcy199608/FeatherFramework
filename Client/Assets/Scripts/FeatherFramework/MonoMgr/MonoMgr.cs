@@ -11,7 +11,7 @@ using System.Linq;
 /// 事件
 /// 协程
 /// </summary>
-public class MonoMgr : SingletonMono<MonoMgr>
+public class MonoMgr : DontDestroyMonoSingleton<MonoMgr>
 {
     public new void print(object message) 
     {

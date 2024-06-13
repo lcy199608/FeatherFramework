@@ -25,7 +25,7 @@ public class UIInfo
     }
 }
 
-public class UIMgr : SingletonMono<UIMgr>
+public class UIMgr : DontDestroyMonoSingleton<UIMgr>
 {
     public const string uiPath = "UI/";
     private Dictionary<string, GameObject> panelDic = new Dictionary<string, GameObject>();
@@ -211,7 +211,7 @@ public class UIMgr : SingletonMono<UIMgr>
             }
             catch (Exception e)
             {
-                Debug.LogError("HideAllUI Throw Exception!");
+                Debug.LogError("HideAllUI Throw Exception! \n" + e.Message);
             }
         });
     }

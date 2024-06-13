@@ -12,9 +12,9 @@ public static class GameManager
     static void Init()
     {
         //本地数据
-        SaveHandler.Initialize();
-        SaveHandler.LoadData(SaveHandler.GetSystemData(GameFile, 0));
+        SaveDataMgr.Initialize();
+        SaveDataMgr.LoadData(SaveDataMgr.GetSystemData(GameFile, 0));
         //配置表
-        ConfigSystem.Instance.InitConfig();
+        ConfigMgr.Instance.InitConfig();
     }
 }

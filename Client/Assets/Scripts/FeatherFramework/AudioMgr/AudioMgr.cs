@@ -12,7 +12,7 @@ public enum AudioType
     EFFECT
 }
 
-public class AudioMgr : SingletonMono<AudioMgr>
+public class AudioMgr : DontDestroyMonoSingleton<AudioMgr>
 {
     const string path = "Audios/";
 
@@ -53,8 +53,8 @@ public class AudioMgr : SingletonMono<AudioMgr>
 
     public AudioMgr()
     {
-        BGMVol = SaveHandler.GetSystemData(volFile, 1.0f);
-        EffectVol = SaveHandler.GetSystemData(effectVolFile, 1.0f);
+        BGMVol = SaveDataMgr.GetSystemData(volFile, 1.0f);
+        EffectVol = SaveDataMgr.GetSystemData(effectVolFile, 1.0f);
     }
 
     // 播放音效
@@ -222,11 +222,11 @@ public class AudioMgr : SingletonMono<AudioMgr>
 
     public void SaveBGMVolume()
     {
-        SaveHandler.SetSystemData(volFile, BGMVol,true);
+        SaveDataMgr.SetSystemData(volFile, BGMVol,true);
     }
 
     public void SaveEffectVolume()
     {
-        SaveHandler.SetSystemData(effectVolFile, EffectVol, true);
+        SaveDataMgr.SetSystemData(effectVolFile, EffectVol, true);
     }
 }
