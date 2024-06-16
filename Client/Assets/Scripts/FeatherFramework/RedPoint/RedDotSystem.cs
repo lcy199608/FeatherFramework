@@ -1,36 +1,35 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
 
-public class RedPointSystem : MonoBehaviour
+public class RedDotSystem : MonoBehaviour
 {
-    public delegate void OnPointNumChange(RedPointNode node); //红点变化通知
-    RedPointNode mRootNode; //红点树Root节点
+    public delegate void OnRedDotNumChange(RedDotNode node); //红点变化通知
+    RedDotNode mRootNode; //红点树Root节点
 
-    static List<string> redPointTreeList = new List<string> //初始化红点树
+    static List<string> redDotTreeList = new List<string> //初始化红点树
     {
         //填入红点树信息
 
-        RedPointConst.main,
-        RedPointConst.mail,
-        RedPointConst.mailSystem,
-        RedPointConst.mailTeam,
-        RedPointConst.mailTeamInfo1,
-        RedPointConst.mailTeamInfo2,
+        RedDotConst.main,
+        RedDotConst.mail,
+        RedDotConst.mailSystem,
+        RedDotConst.mailTeam,
+        RedDotConst.mailTeamInfo1,
+        RedDotConst.mailTeamInfo2,
     };
 
     /// <summary>
     /// 初始化红点树结构
     /// </summary>
-    public void InitRedPointTreeNode()
+    public void InitRedDotTreeNode()
     {
-        mRootNode = new RedPointNode(); //根节点
-        mRootNode.nodeName = RedPointConst.main; //设置根节点名称
+        mRootNode = new RedDotNode(); //根节点
+        mRootNode.nodeName = RedDotConst.main; //设置根节点名称
 
-        foreach (var s in redPointTreeList)
+        foreach (var s in redDotTreeList)
         {
-            AddNewRedPointToTree(s);
+            AddNewRedDotToTree(s);
         }
     }
 
@@ -46,7 +45,7 @@ public class RedPointSystem : MonoBehaviour
     /// 遍历该节点下的所有节点
     /// </summary>
     /// <param name="node"></param>
-    void TraverseTree(RedPointNode node)
+    void TraverseTree(RedDotNode node)
     {
         Debug.Log(node.nodeName);
         if (node.dicChildren.Count == 0)
@@ -64,13 +63,13 @@ public class RedPointSystem : MonoBehaviour
     /// 在红点树中添加新节点
     /// </summary>
     /// <param name="strNode"></param>
-    public void AddNewRedPointToTree(string strNode)
+    public void AddNewRedDotToTree(string strNode)
     {
         var node = mRootNode;
         var treeNodeAy = strNode.Split('.'); //切割节点信息
         if (treeNodeAy[0] != mRootNode.nodeName) //如果根节点不符合，报错并跳过该节点
         {
-            Debug.LogError("RedPointTree Root Node Error:" + treeNodeAy[0]);
+            Debug.LogError("RedDotTree Root Node Error:" + treeNodeAy[0]);
             return;
         }
 
@@ -81,7 +80,7 @@ public class RedPointSystem : MonoBehaviour
                 //如果treeNodeAy[i]节点还不是当前节点的子节点，则添加
                 if (!node.dicChildren.ContainsKey(treeNodeAy[i]))
                 {
-                    node.dicChildren.Add(treeNodeAy[i], new RedPointNode());
+                    node.dicChildren.Add(treeNodeAy[i], new RedDotNode());
                 }
                 node.dicChildren[treeNodeAy[i]].nodeName = treeNodeAy[i];
                 node.dicChildren[treeNodeAy[i]].parent = node;
@@ -91,14 +90,14 @@ public class RedPointSystem : MonoBehaviour
         }
     }
 
-    public void RemoveRedPointFromTree(string strNode)
+    public void RemoveRedDotFromTree(string strNode)
     {
         var node = mRootNode;
 
         var treeNodeAy = strNode.Split('.'); //切割节点信息
         if (treeNodeAy[0] != mRootNode.nodeName) //如果根节点不符合，报错并跳过该节点
         {
-            Debug.LogError("RedPointTree Root Node Error:" + treeNodeAy[0]);
+            Debug.LogError("RedDotTree Root Node Error:" + treeNodeAy[0]);
             return;
         }
 
@@ -118,24 +117,6 @@ public class RedPointSystem : MonoBehaviour
             }
 
             RemoveNode(strNode, node);
-
-            //清除目标节点以及只有当前节点空的父节点
-            //while (parent.dicChildren.Count > 0)
-            //{
-            //    if (parent.dicChildren.Count > 1)
-            //    {
-            //        RemoveNode(strNode, node, parent);
-            //        return;
-            //    }
-            //    else if (!parent.parent)
-            //    {
-            //        RemoveNode(strNode, node, parent);
-            //        return;
-            //    }
-
-            //    node = parent;
-            //    parent = node.parent;
-            //}
         }
         else
         {
@@ -143,7 +124,7 @@ public class RedPointSystem : MonoBehaviour
         }
     }
 
-    void RemoveNode(string strNode, RedPointNode node)
+    void RemoveNode(string strNode, RedDotNode node)
     {
         SetInvoke(strNode, 0);
         node.parent.dicChildren.Remove(node.nodeName);
@@ -155,12 +136,12 @@ public class RedPointSystem : MonoBehaviour
     /// </summary>
     /// <param name="strNode"></param>
     /// <param name="callBack"></param>
-    public void SetRedPointNodeCallBack(string strNode,RedPointSystem.OnPointNumChange callBack)
+    public void SetRedDotNodeCallBack(string strNode,RedDotSystem.OnRedDotNumChange callBack)
     {
         var nodeList = strNode.Split('.'); //分析树节点
         if(nodeList.Length == 1)
         {
-            if(nodeList[0] != RedPointConst.main)
+            if(nodeList[0] != RedDotConst.main)
             {
                 //根节点不对
                 Debug.LogError("Get Wrong Root Node! Current Is " + nodeList[0]);
@@ -201,7 +182,7 @@ public class RedPointSystem : MonoBehaviour
         //判断根节点是否符合
         if(nodeList.Length == 1)
         {
-            if(nodeList[0] != RedPointConst.main)
+            if(nodeList[0] != RedDotConst.main)
             {
                 Debug.LogError("Get Wrong Root Node! Current Is " + nodeList[0]);
                 return;
@@ -222,7 +203,7 @@ public class RedPointSystem : MonoBehaviour
 
             if(i == nodeList.Length - 1) //最后一个节点
             {
-                node.SetRedPointNum(rpNum); //设置节点的红点数量
+                node.SetRedDotNum(rpNum); //设置节点的红点数量
             }
         }
     }

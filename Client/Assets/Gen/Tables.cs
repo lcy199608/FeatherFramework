@@ -14,16 +14,19 @@ namespace cfg
 public partial class Tables
 {
     public Language Language {get; }
+    public RedDot RedDot {get; }
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
         Language = new Language(loader("language"));
+        RedDot = new RedDot(loader("reddot"));
         ResolveRef();
     }
     
     private void ResolveRef()
     {
         Language.ResolveRef(this);
+        RedDot.ResolveRef(this);
     }
 }
 

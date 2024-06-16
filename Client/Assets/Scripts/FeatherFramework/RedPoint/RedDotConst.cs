@@ -1,11 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 /// <summary>
 /// 红点树结构
 /// </summary>
-public class RedPointConst : MonoBehaviour
+public class RedDotConst
 {
     public const string main = "Main"; //主界面
     public const string mail = "Main.Mail"; //主界面邮件
