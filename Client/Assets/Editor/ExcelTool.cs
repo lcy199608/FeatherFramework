@@ -1,3 +1,4 @@
+ï»¿using System;
 using System.Diagnostics;
 using System.IO;
 using UnityEditor;
@@ -5,19 +6,27 @@ using UnityEngine;
 
 public class ExcelTool : MonoBehaviour
 {
-    [MenuItem("Tools/Excel/¶ÁÈ¡ÅäÖÃ±í")]
+    [MenuItem("Tools/Excel/è¯»å–é…ç½®è¡¨")]
     private static void RunMyBatFile()
     {
-        // ÉèÖÃ.batÎÄ¼şµÄÂ·¾¶
+        // è®¾ç½®.batæ–‡ä»¶çš„è·¯å¾„
         string batFilePath = Path.Combine(Path.Combine(Application.dataPath, "../../Config/MiniTemplate/"), "gen.bat");
 
-        // ´´½¨²¢ÔËĞĞ½ø³Ì
+        // åˆ›å»ºå¹¶è¿è¡Œè¿›ç¨‹
         Process process = new Process();
         process.StartInfo.FileName = batFilePath;
-        //process.StartInfo.CreateNoWindow = true; // ²»ÏÔÊ¾´°¿Ú
-        //process.StartInfo.UseShellExecute = false; // ²»Ê¹ÓÃÏµÍ³Íâ¿ÇÆô¶¯½ø³Ì
-        process.Start(); // Æô¶¯½ø³Ì
-        process.WaitForExit(); // µÈ´ı½ø³Ì½áÊø
+        //process.StartInfo.CreateNoWindow = true; // ä¸æ˜¾ç¤ºçª—å£
+        //process.StartInfo.UseShellExecute = false; // ä¸ä½¿ç”¨ç³»ç»Ÿå¤–å£³å¯åŠ¨è¿›ç¨‹
+        // æ³¨å†Œè¿›ç¨‹é€€å‡ºäº‹ä»¶
+        process.Exited += ProcessExited;
+        process.Start(); // å¯åŠ¨è¿›ç¨‹
+        process.WaitForExit(); // ç­‰å¾…è¿›ç¨‹ç»“æŸ
+    }
+
+    private static void ProcessExited(object sender, EventArgs e)
+    {
+        // åœ¨è¿›ç¨‹å®Œæˆåæ‰§è¡Œèµ„æºåˆ·æ–°
+        UnityEditor.AssetDatabase.Refresh();
         UnityEngine.Debug.Log("Read Config Over");
     }
 }

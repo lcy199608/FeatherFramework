@@ -1,35 +1,54 @@
-﻿using System.Collections;
+﻿using cfg;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-public class RedDotSystem : MonoBehaviour
+public class RedDotSystem : Singleton<RedDotSystem>
 {
     public delegate void OnRedDotNumChange(RedDotNode node); //红点变化通知
-    RedDotNode mRootNode; //红点树Root节点
-
-    static List<string> redDotTreeList = new List<string> //初始化红点树
-    {
-        //填入红点树信息
-
-        RedDotConst.main,
-        RedDotConst.mail,
-        RedDotConst.mailSystem,
-        RedDotConst.mailTeam,
-        RedDotConst.mailTeamInfo1,
-        RedDotConst.mailTeamInfo2,
-    };
+    public RedDotNode mRootNode; //红点树Root节点
+    static Dictionary<RedDotType,string> redDotTreeList = new Dictionary<RedDotType, string>(); //初始化红点树
 
     /// <summary>
     /// 初始化红点树结构
     /// </summary>
     public void InitRedDotTreeNode()
     {
+        InitRedDotData();
         mRootNode = new RedDotNode(); //根节点
-        mRootNode.nodeName = RedDotConst.main; //设置根节点名称
-
-        foreach (var s in redDotTreeList)
+        mRootNode.nodeName = GetPath(RedDotType.Root); //设置根节点名称
+        foreach (var s in redDotTreeList.Values)
         {
             AddNewRedDotToTree(s);
+        }
+    }
+
+    void InitRedDotData()
+    {
+        foreach (var data in ConfigMgr.Config.RedDot.DataList)
+        {
+            if (!redDotTreeList.ContainsKey(data.Type))
+            {
+                redDotTreeList.Add(data.Type, data.Path);
+            }
+            else
+            {
+                Debug.LogError("RedDotType Already Exists! Check RedDot Config Please.");
+            }
+        }
+    }
+
+    string GetPath(RedDotType type)
+    {
+        if (redDotTreeList.ContainsKey(type))
+        {
+            return redDotTreeList[type];
+        }
+        else
+        {
+            Debug.LogError("RedDotType Not Exists! Check RedDot Config Please.");
+            return string.Empty;
         }
     }
 
@@ -66,7 +85,7 @@ public class RedDotSystem : MonoBehaviour
     public void AddNewRedDotToTree(string strNode)
     {
         var node = mRootNode;
-        var treeNodeAy = strNode.Split('.'); //切割节点信息
+        var treeNodeAy = strNode.Split('/'); //切割节点信息
         if (treeNodeAy[0] != mRootNode.nodeName) //如果根节点不符合，报错并跳过该节点
         {
             Debug.LogError("RedDotTree Root Node Error:" + treeNodeAy[0]);
@@ -90,11 +109,11 @@ public class RedDotSystem : MonoBehaviour
         }
     }
 
-    public void RemoveRedDotFromTree(string strNode)
+    public void RemoveRedDotFromTree(RedDotType type)
     {
         var node = mRootNode;
-
-        var treeNodeAy = strNode.Split('.'); //切割节点信息
+        string strNode = GetPath(type);
+        var treeNodeAy = strNode.Split('/'); //切割节点信息
         if (treeNodeAy[0] != mRootNode.nodeName) //如果根节点不符合，报错并跳过该节点
         {
             Debug.LogError("RedDotTree Root Node Error:" + treeNodeAy[0]);
@@ -116,7 +135,7 @@ public class RedDotSystem : MonoBehaviour
                 node = node.dicChildren[treeNodeAy[i]];
             }
 
-            RemoveNode(strNode, node);
+            RemoveNode(type, node);
         }
         else
         {
@@ -124,9 +143,9 @@ public class RedDotSystem : MonoBehaviour
         }
     }
 
-    void RemoveNode(string strNode, RedDotNode node)
+    void RemoveNode(RedDotType type, RedDotNode node)
     {
-        SetInvoke(strNode, 0);
+        SetInvoke(type, 0);
         node.parent.dicChildren.Remove(node.nodeName);
         node.parent = null;
     }
@@ -136,12 +155,13 @@ public class RedDotSystem : MonoBehaviour
     /// </summary>
     /// <param name="strNode"></param>
     /// <param name="callBack"></param>
-    public void SetRedDotNodeCallBack(string strNode,RedDotSystem.OnRedDotNumChange callBack)
+    public void SetRedDotNodeCallBack(RedDotType type,RedDotSystem.OnRedDotNumChange callBack)
     {
-        var nodeList = strNode.Split('.'); //分析树节点
+        string strNode = GetPath(type);
+        var nodeList = strNode.Split('/'); //分析树节点
         if(nodeList.Length == 1)
         {
-            if(nodeList[0] != RedDotConst.main)
+            if(nodeList[0] != GetPath(RedDotType.Root))
             {
                 //根节点不对
                 Debug.LogError("Get Wrong Root Node! Current Is " + nodeList[0]);
@@ -175,14 +195,15 @@ public class RedDotSystem : MonoBehaviour
     /// </summary>
     /// <param name="strNode"></param>
     /// <param name="rpNum"></param>
-    public void SetInvoke(string strNode,int rpNum)
+    public void SetInvoke(RedDotType type, int rpNum)
     {
-        var nodeList = strNode.Split('.'); //分析树节点
+        string strNode = GetPath(type);
+        var nodeList = strNode.Split('/'); //分析树节点
 
         //判断根节点是否符合
         if(nodeList.Length == 1)
         {
-            if(nodeList[0] != RedDotConst.main)
+            if(nodeList[0] != GetPath(RedDotType.Root))
             {
                 Debug.LogError("Get Wrong Root Node! Current Is " + nodeList[0]);
                 return;

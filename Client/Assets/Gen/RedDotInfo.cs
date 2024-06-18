@@ -18,7 +18,7 @@ public sealed partial class RedDotInfo : Luban.BeanBase
     {
         Id = _buf.ReadInt();
         Path = _buf.ReadString();
-        Name = (RedDotType)_buf.ReadInt();
+        Type = (RedDotType)_buf.ReadInt();
     }
 
     public static RedDotInfo DeserializeRedDotInfo(ByteBuf _buf)
@@ -34,7 +34,7 @@ public sealed partial class RedDotInfo : Luban.BeanBase
     /// <summary>
     /// 红点名称
     /// </summary>
-    public readonly RedDotType Name;
+    public readonly RedDotType Type;
    
     public const int __ID__ = 596817894;
     public override int GetTypeId() => __ID__;
@@ -51,7 +51,7 @@ public sealed partial class RedDotInfo : Luban.BeanBase
         return "{ "
         + "id:" + Id + ","
         + "path:" + Path + ","
-        + "name:" + Name + ","
+        + "type:" + Type + ","
         + "}";
     }
 }

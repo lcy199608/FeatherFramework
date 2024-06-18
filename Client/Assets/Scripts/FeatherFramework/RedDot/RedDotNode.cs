@@ -28,7 +28,7 @@ public class RedDotNode
         NotifyRedDotNumChange();
 
         //向上通知红点
-        if (nodeName != RedDotConst.main && parent.nodeName != string.Empty)
+        if (nodeName != RedDotSystem.Instance.mRootNode.nodeName && parent.nodeName != string.Empty)
         {
             parent.ChangeRedDotNum();
         }
@@ -53,7 +53,7 @@ public class RedDotNode
         }
 
         //向上通知红点
-        if(nodeName != RedDotConst.main && parent.nodeName != string.Empty)
+        if(nodeName != RedDotSystem.Instance.mRootNode.nodeName && parent.nodeName != string.Empty)
         {
             parent.ChangeRedDotNum();
         }

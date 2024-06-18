@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using cfg;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,22 +20,16 @@ public class RedDotTest : MonoBehaviour
         rds.InitRedDotTreeNode();
 
         //绑定回调
-        rds.SetRedDotNodeCallBack(RedDotConst.mail, MailCallBack);
-        rds.SetRedDotNodeCallBack(RedDotConst.mailSystem, MailSystemCallBack);
-        rds.SetRedDotNodeCallBack(RedDotConst.mailTeamInfo1, MailTeamInfo1CallBack);
-        rds.SetRedDotNodeCallBack(RedDotConst.mailTeamInfo2, MailTeamInfo2CallBack);
-        rds.SetRedDotNodeCallBack(RedDotConst.mailTeam, MailTeamCallBack);
+        rds.SetRedDotNodeCallBack(RedDotType.RedDotTest, TestCallBack);
 
         //修改红点数量
-        rds.SetInvoke(RedDotConst.mailSystem, 3);
-        rds.SetInvoke(RedDotConst.mailTeamInfo1, 2);
-        rds.SetInvoke(RedDotConst.mailTeamInfo2, 1);
+        rds.SetInvoke(RedDotType.RedDotTest, 3);
 
         rds.Traverse(); //打印树
     }
 
     //回调事件
-    void MailCallBack(RedDotNode node)
+    void TestCallBack(RedDotNode node)
     {
         txtMail.text = node.redDotNum.ToString();
         txtMail.gameObject.SetActive(node.redDotNum > 0);
@@ -73,7 +68,6 @@ public class RedDotTest : MonoBehaviour
     public void RemoveRedDot()
     {
         rds.RemoveRedDotFromTree(RedDotConst.mailTeamInfo1);
-
         rds.Traverse(); //打印树
     }
 

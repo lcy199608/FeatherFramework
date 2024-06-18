@@ -16,5 +16,7 @@ public static class GameManager
         SaveDataMgr.LoadData(SaveDataMgr.GetSystemData(GameFile, 0));
         //配置表
         ConfigMgr.Instance.InitConfig();
+        //红点
+        RedDotSystem.Instance.InitRedDotTreeNode();
     }
 }

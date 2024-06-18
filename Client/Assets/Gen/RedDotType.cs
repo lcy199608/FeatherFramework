@@ -16,11 +16,23 @@ namespace cfg
         /// <summary>
         /// 根节点红点
         /// </summary>
-        Main = 1,
+        Root = 1,
         /// <summary>
-        /// 测试红点
+        /// 测试红点1
         /// </summary>
-        RedDotTest = 2,
+        RedDotTest1 = 2,
+        /// <summary>
+        /// 测试红点2
+        /// </summary>
+        RedDotTest2 = 3,
+        /// <summary>
+        /// 测试红点子节点
+        /// </summary>
+        RedDotTestChild1 = 4,
+        /// <summary>
+        /// 测试红点子节点
+        /// </summary>
+        RedDotTestChild2 = 5,
     }
 
 } 
