@@ -16,8 +16,8 @@ public class RedDotSystem : Singleton<RedDotSystem>
     public void InitRedDotTreeNode()
     {
         InitRedDotData();
-        mRootNode = new RedDotNode(); //根节点
-        mRootNode.nodeName = GetPath(RedDotType.Root); //设置根节点名称
+        string rootPath = GetPath(RedDotType.Root); //获取根节点路径
+        mRootNode = new RedDotNode(rootPath, rootPath,null); //根节点
         foreach (var s in redDotTreeList.Values)
         {
             AddNewRedDotToTree(s);
@@ -66,7 +66,7 @@ public class RedDotSystem : Singleton<RedDotSystem>
     /// <param name="node"></param>
     void TraverseTree(RedDotNode node)
     {
-        Debug.Log(node.nodeName);
+        Debug.Log("name: " + node.nodeName + " num: " + node.redDotNum);
         if (node.dicChildren.Count == 0)
         {
             return;
@@ -82,7 +82,7 @@ public class RedDotSystem : Singleton<RedDotSystem>
     /// 在红点树中添加新节点
     /// </summary>
     /// <param name="strNode"></param>
-    public void AddNewRedDotToTree(string strNode)
+    void AddNewRedDotToTree(string strNode)
     {
         var node = mRootNode;
         var treeNodeAy = strNode.Split('/'); //切割节点信息
@@ -99,10 +99,13 @@ public class RedDotSystem : Singleton<RedDotSystem>
                 //如果treeNodeAy[i]节点还不是当前节点的子节点，则添加
                 if (!node.dicChildren.ContainsKey(treeNodeAy[i]))
                 {
-                    node.dicChildren.Add(treeNodeAy[i], new RedDotNode());
+                    node.dicChildren.Add(treeNodeAy[i], new RedDotNode(strNode, treeNodeAy[i], node));
                 }
-                node.dicChildren[treeNodeAy[i]].nodeName = treeNodeAy[i];
-                node.dicChildren[treeNodeAy[i]].parent = node;
+                else
+                {
+                    node.dicChildren[treeNodeAy[i]].nodeName = treeNodeAy[i];
+                    node.dicChildren[treeNodeAy[i]].parent = node;
+                }
 
                 node = node.dicChildren[treeNodeAy[i]]; //进入子节点，继续遍历
             }

@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class RedDotNode
 {
+    public string nodePath = string.Empty; //节点路径
     public string nodeName = string.Empty; //节点名称
     public int redDotNum = 0; //红点数量
     public RedDotNode parent = null; //父节点
@@ -11,6 +12,13 @@ public class RedDotNode
 
     //子节点
     public Dictionary<string, RedDotNode> dicChildren = new Dictionary<string, RedDotNode>();
+
+    public RedDotNode(string nodePath, string nodeName, RedDotNode parent)
+    {
+        this.nodePath = nodePath;
+        this.nodeName = nodeName;
+        this.parent = parent;
+    }
 
     /// <summary>
     /// 设置当前节点的红点数量
