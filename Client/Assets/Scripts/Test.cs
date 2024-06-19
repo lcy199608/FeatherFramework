@@ -10,6 +10,6 @@ public class Test : MonoBehaviour
 {
     void Start()
     {
-        UnityEngine.Debug.LogFormat(LanguageMgr.Instance.GetLanguageById(1));
+        //UnityEngine.Debug.LogFormat(LanguageMgr.Instance.GetLanguageById(1));
     }
 }

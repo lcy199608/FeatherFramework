@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TimeMgr : MonoSingleton<TimeMgr>
+public class TimerMgr : MonoSingleton<TimerMgr>
 {
     public delegate void CompleteEvent();
     //bool isLog = true;//是否打印消息
