@@ -1,12 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-public class TimerMgr : MonoSingleton<TimerMgr>
+public class TimerMgr : Singleton<TimerMgr>
 {
     public delegate void CompleteEvent();
-    //bool isLog = true;//是否打印消息
     class TimerData
     {
         public int id;
@@ -16,15 +16,29 @@ public class TimerMgr : MonoSingleton<TimerMgr>
         public bool isIgnoreTimeScale;  // 是否忽略时间速率
         public bool isLoop;     //是否重复
         public bool isSecond;   //是否以秒为单位 否则为帧数
+        public Coroutine coroutine; //标记协程
     }
 
     int timerId = 0;
     Dictionary<int, TimerData> timerDict = new Dictionary<int, TimerData>();
     List<int> tempRemoveTimer = new List<int>();
-    void Update()
+
+    public TimerMgr()
     {
-        foreach (var (id, timeData) in timerDict)
+        //绑定Update
+        MonoMgr.Instance.AddUpdateListener(UpdateTime);
+    }
+
+    void UpdateTime()
+    {
+        for(int i = timerDict.Count - 1; i >= 0 ; i--)
         {
+            TimerData timeData = timerDict.ElementAt(i).Value;
+            if (!timeData.isSecond)
+            {
+                continue;
+            }
+
             float nowTime = TimeNow(timeData.isIgnoreTimeScale);
             if (nowTime >= timeData.targetTime)
             {
@@ -35,12 +49,8 @@ public class TimerMgr : MonoSingleton<TimerMgr>
                 }
                 else
                 {
-                    tempRemoveTimer.Add(id);
+                    tempRemoveTimer.Add(timeData.id);
                 }
-            }
-            else
-            {
-                timeData.targetTime = nowTime + timeData.time;
             }
         }
         for(int i = 0; i < tempRemoveTimer.Count; i++)
@@ -74,16 +84,22 @@ public class TimerMgr : MonoSingleton<TimerMgr>
         // 如果不是以秒为单位，则执行延迟帧数
         if (!isSecond)
         {
-            StartCoroutine(DelayedExecution(timerDict[timerId]));
+            timerDict[timerId].coroutine = MonoMgr.Instance.StartCoroutine(DelayedExecution(timerDict[timerId]));
         }
         return timerId;
     }
 
-    // 停止指定定时器
+    // 移除指定定时器
     public void RemoveTimer(int id)
     {
         if (timerDict.ContainsKey(id))
         {
+            TimerData data = timerDict[id];
+            if (!data.isSecond)
+            {
+                MonoMgr.Instance.StopCoroutine(data.coroutine);
+            }
+            data = null;
             timerDict.Remove(id);
         }
     }
@@ -91,7 +107,10 @@ public class TimerMgr : MonoSingleton<TimerMgr>
     //清除所有定时器
     public void RemoveAllTimer()
     {
-        timerDict.Clear();
+        foreach (var (id, timeData) in timerDict)
+        {
+            RemoveTimer(id);
+        }
     }
 
     IEnumerator DelayedExecution(TimerData data)
@@ -103,9 +122,14 @@ public class TimerMgr : MonoSingleton<TimerMgr>
         }
         // 执行动作
         data.onCompleted?.Invoke();
+
         if (data.isLoop)
         {
-            DelayedExecution(data);
+            // 防止完成事件中移除了定时器，不判断会导致依然执行协程
+            if(data != null && timerDict.ContainsKey(data.id))
+            {
+                data.coroutine = MonoMgr.Instance.StartCoroutine(DelayedExecution(data));
+            }
         }
         else
         {
