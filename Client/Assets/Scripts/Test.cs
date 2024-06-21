@@ -12,7 +12,8 @@ public class Test : MonoBehaviour
     void Start()
     {
         //UnityEngine.Debug.LogFormat(LanguageMgr.Instance.GetLanguageById(1));
-        id = TimerMgr.Instance.CreateNewTimer(2, TestFunc, true,true);
+        id = TimerMgr.Instance.CreateNewCountTimer(2, TestFunc, 3);
+        //TimerMgr.Instance.CreateNewTimer(5, TestFunc, false, true);
         //TimerMgr.Instance.RemoveTimer(id);
         //TimerMgr.Instance.CreateNewTimer(3, TestFunc, false,true,true);
     }
@@ -20,6 +21,7 @@ public class Test : MonoBehaviour
     void TestFunc()
     {
         Debug.LogWarning("Complete");
-        TimerMgr.Instance.RemoveTimer(id);
+        //TimerMgr.Instance.RemoveAllTimer();
+        //TimerMgr.Instance.RemoveTimer(id);
     }
 }
