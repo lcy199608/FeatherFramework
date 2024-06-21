@@ -80,7 +80,7 @@ public class TimerMgr : Singleton<TimerMgr>
     /// </summary>
     /// <param name="time">延迟时间（秒）</param>
     /// <param name="onCompleted">结束回调</param>
-    /// <param name="isLoop">是否循环</param>
+    /// <param name="isLoop">是否循环,false则只执行一次</param>
     /// <param name="isSecond">秒/帧数</param>
     /// <param name="isIgnoreTimeScale">是否受TimeScale影响</param>
     /// <returns></returns>

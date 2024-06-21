@@ -11,17 +11,12 @@ public class Test : MonoBehaviour
     int id;
     void Start()
     {
-        //UnityEngine.Debug.LogFormat(LanguageMgr.Instance.GetLanguageById(1));
-        id = TimerMgr.Instance.CreateNewCountTimer(2, TestFunc, 3);
-        //TimerMgr.Instance.CreateNewTimer(5, TestFunc, false, true);
-        //TimerMgr.Instance.RemoveTimer(id);
-        //TimerMgr.Instance.CreateNewTimer(3, TestFunc, false,true,true);
+        float num = 12345f;
+        Debug.Log(Utils.FormatNumber(num));
     }
 
     void TestFunc()
     {
         Debug.LogWarning("Complete");
-        //TimerMgr.Instance.RemoveAllTimer();
-        //TimerMgr.Instance.RemoveTimer(id);
     }
 }
