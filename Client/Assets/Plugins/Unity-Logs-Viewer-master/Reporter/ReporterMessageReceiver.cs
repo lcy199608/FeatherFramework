@@ -6,7 +6,11 @@ public class ReporterMessageReceiver : MonoBehaviour
 	Reporter reporter;
 	void Start()
 	{
-		reporter = gameObject.GetComponent<Reporter>();
+        if (!Reporter.IsEnableLog)
+        {
+            return;
+        }
+        reporter = gameObject.GetComponent<Reporter>();
 	}
 
 	void OnPreStart()

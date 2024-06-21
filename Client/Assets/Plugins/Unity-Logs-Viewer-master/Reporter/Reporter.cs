@@ -74,7 +74,7 @@ public class Images
 
 public class Reporter : MonoBehaviour
 {
-
+	public static bool IsEnableLog = true;
 	public enum _LogType
 	{
 		Assert    = LogType.Assert,
@@ -303,6 +303,12 @@ public class Reporter : MonoBehaviour
 
 	void Awake()
 	{
+		if (!IsEnableLog)
+		{
+			gameObject.SetActive(false);
+			return;
+		}
+
 		if (!Initialized)
 			Initialize();
 
@@ -313,6 +319,10 @@ public class Reporter : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (!IsEnableLog)
+        {
+            return;
+        }
 #if UNITY_CHANGE3
         SceneManager.sceneLoaded -= _OnLevelWasLoaded;
 #endif
@@ -320,7 +330,12 @@ public class Reporter : MonoBehaviour
 
     void OnEnable()
 	{
-		if (logs.Count == 0)//if recompile while in play mode
+        if (!IsEnableLog)
+        {
+            return;
+        }
+
+        if (logs.Count == 0)//if recompile while in play mode
 			clear();
 	}
 
@@ -600,7 +615,12 @@ public class Reporter : MonoBehaviour
 
 	void Start()
 	{
-		logDate = System.DateTime.Now.ToString();
+        if (!IsEnableLog)
+        {
+            return;
+        }
+
+        logDate = System.DateTime.Now.ToString();
 		StartCoroutine("readInfo");
 	}
 
@@ -1858,7 +1878,12 @@ public class Reporter : MonoBehaviour
 
 	void Update()
 	{
-		fpsText = fps.ToString("0.000");
+        if (!IsEnableLog)
+        {
+            return;
+        }
+
+        fpsText = fps.ToString("0.000");
 		gcTotalMemory = (((float)System.GC.GetTotalMemory(false)) / 1024 / 1024);
 		//addSample();
 

@@ -6,7 +6,7 @@ public class LanguageMgr : Singleton<LanguageMgr>
     public LanguageMgr()
     {
         //读取存储语言
-        currentLanguage = SaveDataMgr.GetSystemData(languageFile, currentLanguage);
+        currentLanguage = SaveDataMgr.GetSystemData(languageFile, SupportedLanguage.Default);
     }
 
     SupportedLanguage currentLanguage = SupportedLanguage.Default;
@@ -20,7 +20,7 @@ public class LanguageMgr : Singleton<LanguageMgr>
             if (currentLanguage == SupportedLanguage.Default)
             {
                 //判断配置语言
-                //currentLanguage = ;
+                currentLanguage = GameManager.gameConfig.language;
                 if (currentLanguage != SupportedLanguage.Default)
                 {
                     return currentLanguage;
@@ -60,7 +60,7 @@ public class LanguageMgr : Singleton<LanguageMgr>
         }
 
         set 
-        { 
+        {
             SaveDataMgr.SetSystemData(languageFile, value,true);
             EventCenter.Instance.EventTrigger("LanguageSwitch");
         }
@@ -71,27 +71,23 @@ public class LanguageMgr : Singleton<LanguageMgr>
         if (ConfigMgr.Config.Language.DataMap.ContainsKey(id))
         {
             var languageData = ConfigMgr.Config.Language.Get(id);
-            if (Application.systemLanguage == SystemLanguage.ChineseSimplified)
+            if (CurrentLanguage == SupportedLanguage.ChineseSimplified)
             {
                 return languageData.ChineseSimplified;
             }
-            else if (Application.systemLanguage == SystemLanguage.ChineseTraditional)
+            else if (CurrentLanguage == SupportedLanguage.ChineseTraditional)
             {
                 return languageData.ChineseTraditional;
             }
-            else if (Application.systemLanguage == SystemLanguage.Chinese)
-            {
-                return languageData.ChineseSimplified;
-            }
-            else if (Application.systemLanguage == SystemLanguage.English)
+            else if (CurrentLanguage == SupportedLanguage.English)
             {
                 return languageData.English;
             }
-            else if (Application.systemLanguage == SystemLanguage.Japanese)
+            else if (CurrentLanguage == SupportedLanguage.Japanese)
             {
                 return languageData.Japanese;
             }
-            else if (Application.systemLanguage == SystemLanguage.Korean)
+            else if (CurrentLanguage == SupportedLanguage.Korean)
             {
                 return languageData.Korean;
             }

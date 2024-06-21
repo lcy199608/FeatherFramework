@@ -53,9 +53,6 @@ public class LanguageGameObjectSwitch : MonoBehaviour
             case LanguageMgr.SupportedLanguage.Korean:
                 KO?.SetActive(true);
                 break;
-            default:
-                CN_T?.SetActive(true);
-                break;
         }
     }
 
