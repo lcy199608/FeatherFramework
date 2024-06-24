@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.SceneManagement;
 
 public static class GameManager
@@ -12,7 +13,8 @@ public static class GameManager
     static void Init()
     {
         //项目配置
-        Config = ResMgr.Instance.Load<GameConfig>("GameConfig");
+        Addressables.InitializeAsync();
+        Config = ResMgr.Instance.Load<GameConfig>("Res/GameConfig.asset");
         //日志
         Reporter.IsEnableLog = Config.isDebug;
         Debug.unityLogger.logEnabled = Config.isDebug;
