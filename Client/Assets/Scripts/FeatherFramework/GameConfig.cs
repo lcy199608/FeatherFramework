@@ -12,4 +12,7 @@ public class GameConfig : ScriptableObject
     [Title("默认语言")]
     [EnumPaging]
     public LanguageMgr.SupportedLanguage language;
+
+    [Title("帧率设置(0为不限制,-1为垂直同步)")]
+    public int targetFrameRate = -1;
 }

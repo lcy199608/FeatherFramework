@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isDebug: 1
   language: 0
+  targetFrameRate: -1

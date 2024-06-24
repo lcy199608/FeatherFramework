@@ -20,7 +20,7 @@ public class LanguageMgr : Singleton<LanguageMgr>
             if (currentLanguage == SupportedLanguage.Default)
             {
                 //判断配置语言
-                currentLanguage = GameManager.gameConfig.language;
+                currentLanguage = GameManager.Config.language;
                 if (currentLanguage != SupportedLanguage.Default)
                 {
                     return currentLanguage;
