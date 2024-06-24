@@ -52,16 +52,4 @@ public class MonoMgr : DontDestroyMonoSingleton<MonoMgr>
     {
         base.StopCoroutine(routine);
     }
-
-    //协程调用简化
-    public void DelayToCall(Action action,float time)
-    {
-        StartCoroutine(DelayToCallEnumerator(action, time));
-    }
-
-    private IEnumerator DelayToCallEnumerator(Action action,float time)
-    {
-        yield return new WaitForSeconds(time);
-        action();
-    }
 }
