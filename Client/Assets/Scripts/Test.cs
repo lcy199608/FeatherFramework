@@ -8,15 +8,29 @@ using cfg;
 
 public class Test : MonoBehaviour
 {
-    int id;
+    List<GameObject> cache = new List<GameObject>();
     void Start()
     {
-        float num = 12345f;
-        Debug.Log(Utils.FormatNumber(num));
+        
     }
 
-    void TestFunc()
+    public void TestFunc()
     {
-        Debug.LogWarning("Complete");
+        ResMgr.Instance.LoadAsync<GameObject>("Res/UI/JoystickPanel.prefab", (obj) => { cache.Add(Instantiate(obj)); });
+        ResMgr.Instance.LoadAsync<GameObject>("Res/UI/JoystickPanel.prefab", (obj) => { cache.Add(Instantiate(obj)); });
+        ResMgr.Instance.LoadAsync<GameObject>("Res/UI/JoystickPanel.prefab", (obj) => { cache.Add(Instantiate(obj)); });
+        ResMgr.Instance.LoadAsync<GameObject>("Res/UI/JoystickPanel.prefab", (obj) => { cache.Add(Instantiate(obj)); });
+    }
+
+    public void TestFunc2()
+    {
+        ResMgr.Instance.ReleaseRes("Res/UI/JoystickPanel.prefab",true);
+        //ResMgr.Instance.ReleaseUnusedResources();
+    }
+
+    public void TestFunc3()
+    {
+        cache.ForEach(obj => Destroy(obj));
+        cache.Clear();
     }
 }
