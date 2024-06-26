@@ -4,7 +4,8 @@ using UnityEngine;
 
 public abstract class BasePanel : MonoBehaviour
 {
-    public virtual void Init() { }
-    public abstract void ShowPanel();
-    public abstract void HidePanel();
+    public object uiData;
+    public virtual void OnInit() { }
+    public abstract void OnShow();
+    public abstract void OnHide();
 }

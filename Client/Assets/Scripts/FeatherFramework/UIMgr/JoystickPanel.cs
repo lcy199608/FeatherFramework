@@ -28,7 +28,7 @@ public class JoystickPanel : BasePanel
         RightBottom,
     }
 
-    public override void ShowPanel()
+    public override void OnShow()
     {
         if (type == JoystickType.AutoHide)
         {
@@ -36,7 +36,7 @@ public class JoystickPanel : BasePanel
         }
     }
 
-    public override void HidePanel()
+    public override void OnHide()
     {
     }
 
@@ -164,7 +164,7 @@ public class JoystickPanel : BasePanel
     Vector2 Screen2LocalPos(RectTransform rect,Vector2 screenPos)
     {
         Vector2 pos;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, screenPos, Camera.main, out pos);
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(rect, screenPos, UIMgr.Instance.UICamera, out pos);
         return pos;
     }
 
@@ -182,9 +182,9 @@ public class JoystickPanel : BasePanel
 	private Image imgControl = null;
 	
 
-    public override void Init()
+    public override void OnInit()
     {
-        base.Init();
+        base.OnInit();
         imgTouchRect = transform.Find("ImgTouchRect").GetComponent<Image>();
 		imgBG = transform.Find("ImgTouchRect/ImgBG").GetComponent<Image>();
 		imgControl = transform.Find("ImgTouchRect/ImgBG/ImgControl").GetComponent<Image>();

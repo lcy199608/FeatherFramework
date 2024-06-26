@@ -11,7 +11,7 @@ public class Test : MonoBehaviour
     List<GameObject> cache = new List<GameObject>();
     void Start()
     {
-        
+        //UIMgr.Instance.ShowUI<JoystickPanel>();
     }
 
     public void TestFunc()

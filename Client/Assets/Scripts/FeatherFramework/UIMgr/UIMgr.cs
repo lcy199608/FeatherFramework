@@ -13,6 +13,13 @@ public enum UILayer
     System
 }
 
+public enum UIType
+{
+    Root,
+    Page,
+    Child,
+}
+
 public class UIInfo
 {
     public string Name;
@@ -27,15 +34,15 @@ public class UIInfo
 
 public class UIMgr : DontDestroyMonoSingleton<UIMgr>
 {
-    public const string uiPath = "UI/";
-    private Dictionary<string, GameObject> panelDic = new Dictionary<string, GameObject>();
-    private Dictionary<string, GameObject> panelCacheDic = new Dictionary<string, GameObject>();
+    public const string uiPath = "Res/UI/";
+    private Dictionary<string, GameObject> panelDic = new Dictionary<string, GameObject>(); //当前打开过的UI
 
-    GameObject UICanvas;
+    public Canvas UICanvas;
+    public Camera UICamera;
     private Transform bot;
     private Transform mid;
     private Transform top;
-    private Transform system;
+    private Transform sys;
 
     /// <summary>
     /// 获取UI上的脚本
@@ -43,171 +50,116 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
     /// <typeparam name="T"></typeparam>
     /// <param name="uiName"></param>
     /// <returns></returns>
-    public T GetUI<T>(bool isShow = false, UILayer layer = UILayer.Middle)
+    public bool TryGetUI<T>(out T panel)
     {
-        T temp;
         var uiName = typeof(T).Name;
 
         if (panelDic.ContainsKey(uiName))
         {
-            temp = panelDic[uiName].GetComponent<T>();
+            panel = panelDic[uiName].GetComponent<T>();
+            return true;
         }
         else
         {
-            //同步加载UI然后返回组件
-
-            if (UICanvas == null)
-            {
-                UICanvas = Instantiate(ResMgr.Instance.Load<GameObject>(uiPath + "UICanvas"));
-                Transform canvas = UICanvas.transform;
-                GameObject.DontDestroyOnLoad(UICanvas);
-                bot = canvas.Find("BottomLayer");
-                mid = canvas.Find("MiddleLayer");
-                top = canvas.Find("TopLayer");
-                system = canvas.Find("SystemLayer");
-            }
-
-            UICanvas.GetComponent<Canvas>().worldCamera = GameObject.Find("UICamera").GetComponent<Camera>();
-
-            GameObject cache;
-
-            if (panelCacheDic.ContainsKey(uiName))
-            {
-                cache = panelCacheDic[uiName];
-            }
-            else
-            {
-                cache = ResMgr.Instance.Load<GameObject>(uiPath + uiName);
-                panelCacheDic.Add(uiName, cache); //缓存UI
-            }
-
-
-
-            var obj = Instantiate(cache);
-            temp = obj.GetComponent<T>();
-            var panel = temp as BasePanel;
-            panel.Init();
-            panelDic.Add(uiName, obj);
+            Debug.LogError("Dont Exist This UI!");
+            panel = default(T);
+            return false;
         }
-
-        if(isShow)
-            InitShowUI<T>(panelDic[uiName], layer, isShow);
-
-        if (temp == null)
-            Debug.LogError("获取组件失败！");
-
-        return temp;
     }
 
-    public void ShowUI<T>(UILayer layer = UILayer.Middle)
+    public void ShowUI<T>(UILayer layer = UILayer.Middle,object uiData = null,Action onCompleted = null)
     {
         if (UICanvas == null)
         {
-            //同步方式加载Canvas，过场景后不删除Canvas
-            UICanvas = Instantiate(ResMgr.Instance.Load<GameObject>(uiPath + "UICanvas"));
-            Transform canvas = UICanvas.transform;
-            GameObject.DontDestroyOnLoad(UICanvas);
-            //获取Canvas中的各个层级
-            bot = canvas.Find("BottomLayer");
-            mid = canvas.Find("MiddleLayer");
-            top = canvas.Find("TopLayer");
-            system = canvas.Find("SystemLayer");
+            CreateUICanvas();
         }
 
-        UICanvas.GetComponent<Canvas>().worldCamera = GameObject.Find("UICamera").GetComponent<Camera>();
-
         var uiName = typeof(T).Name;
-
         if (panelDic.ContainsKey(uiName))
         {
             InitShowUI<T>(panelDic[uiName], layer);
+            onCompleted?.Invoke();
         }
         else
         {
-            if (panelCacheDic.ContainsKey(uiName))
+            ResMgr.Instance.LoadAsync<GameObject>(uiPath + uiName + ".prefab", panel =>
             {
-                var obj = panelCacheDic[uiName];
-
-                var panelTemp = Instantiate(obj);
-                var panel = panelTemp.GetComponent<T>() as BasePanel;
-                panel.Init();
-
+                var panelTemp = Instantiate(panel);
+                var panelSrc = panelTemp.GetComponent<T>() as BasePanel;
+                panelSrc.uiData = uiData;
+                panelSrc.OnInit();
                 InitShowUI<T>(panelTemp, layer);
                 panelDic.Add(uiName, panelTemp);
-            }
-            else
-            {
-                ResMgr.Instance.LoadAsync<GameObject>(uiPath + uiName,_ => 
-                {
-                    panelCacheDic.Add(uiName, _); //缓存UI
-
-                    var panelTemp = Instantiate(_);
-                    var panel = panelTemp.GetComponent<T>() as BasePanel;
-                    panel.Init();
-
-                    InitShowUI<T>(panelTemp, layer);
-                    panelDic.Add(uiName, panelTemp);
-                });
-            }
+                onCompleted?.Invoke();
+            });
         }
     }
 
-    /// <summary>
-    /// 初始化要显示的UI
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="_"></param>
-    /// <param name="layer"></param>
-    void InitShowUI<T>(GameObject _, UILayer layer,bool isShow = true)
+    public void CreateUICanvas()
+    {
+        //同步方式加载Canvas，过场景后不删除Canvas
+        UICanvas = Instantiate(ResMgr.Instance.Load<GameObject>(uiPath + "UICanvas" + ".prefab")).GetComponent<Canvas>();
+        Transform canvas = UICanvas.transform;
+        GameObject.DontDestroyOnLoad(UICanvas);
+        //获取Canvas中的各个层级
+        bot = canvas.Find("BottomLayer");
+        mid = canvas.Find("MiddleLayer");
+        top = canvas.Find("TopLayer");
+        sys = canvas.Find("SystemLayer");
+        UICamera = GameObject.Find("UICamera").GetComponent<Camera>();
+        UICanvas.worldCamera = UICamera;
+    }
+
+    // 初始化要显示的UI
+    void InitShowUI<T>(GameObject panel, UILayer layer)
     {
         switch (layer)
         {
             case UILayer.Bottom:
-                _.transform.SetParent(bot);
+                panel.transform.SetParent(bot);
                 break;
             case UILayer.Middle:
-                _.transform.SetParent(mid);
+                panel.transform.SetParent(mid);
                 break;
             case UILayer.Top:
-                _.transform.SetParent(top);
+                panel.transform.SetParent(top);
                 break;
             case UILayer.System:
-                _.transform.SetParent(system);
+                panel.transform.SetParent(sys);
                 break;
             default:
                 break;
         }
 
-        _.transform.localPosition = Vector3.zero;
-        _.transform.localScale = Vector3.one;
-        (_.transform as RectTransform).offsetMax = Vector3.zero;
-        (_.transform as RectTransform).offsetMin = Vector3.zero;
-        _.transform.SetAsLastSibling();
-        _.gameObject.SetActive(isShow);
+        panel.transform.localPosition = Vector3.zero;
+        panel.transform.localScale = Vector3.one;
+        (panel.transform as RectTransform).offsetMax = Vector3.zero;
+        (panel.transform as RectTransform).offsetMin = Vector3.zero;
+        panel.transform.SetAsLastSibling();
+        panel.gameObject.SetActive(true);
 
-        var panel = _.GetComponent<T>() as BasePanel;
-        if(isShow)
-            panel.ShowPanel();
+        var panelSrc = panel.GetComponent<T>() as BasePanel;
+        panelSrc.OnShow();
     }
 
-    public void HideUI(string name)
+    public void HideUI(string uiName)
     {
-        panelDic[name].GetComponent<BasePanel>().HidePanel();
+        panelDic[uiName].GetComponent<BasePanel>().OnHide();
     }
     public void HideUI<T>()
     {
-        var name = typeof(T).Name;
-        panelDic[name].GetComponent<BasePanel>().HidePanel();
+        var uiName = typeof(T).Name;
+        panelDic[uiName].GetComponent<BasePanel>().OnHide();
     }
 
     public void HideAllUI()
     {
-        panelDic.Values.ToList().ForEach(_ => 
+        panelDic.Values.ToList().ForEach(panel => 
         {
             try
             {
-                _.GetComponent<BasePanel>().HidePanel();
-                _.SetActive(false);
+                panel.GetComponent<BasePanel>().OnHide();
+                panel.SetActive(false);
             }
             catch (Exception e)
             {
@@ -216,48 +168,42 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
         });
     }
 
-    public void RemoveSpecifiedUI(string name)
+    public void RemoveSpecifiedUI(string uiName)
     {
-        if (panelDic.ContainsKey(name))
+        if (panelDic.ContainsKey(uiName))
         {
-            panelDic[name].Destroy();
-            panelDic.Remove(name);
+            panelDic[uiName].Destroy();
+            panelDic.Remove(uiName);
         }
         else
         {
-            Debug.LogError("panelDic不存在此UI!");
+            Debug.LogError("PanelDic Dont Exist This UI!");
         }
     }
 
     //移除指定UI实例
     public void RemoveSpecifiedUI<T>()
     {
-        var name = typeof(T).Name;
-        if (panelDic.ContainsKey(name))
+        var uiName = typeof(T).Name;
+        if (panelDic.ContainsKey(uiName))
         {
-            panelDic[name].Destroy();
-            panelDic.Remove(name);
+            panelDic[uiName].Destroy();
+            panelDic.Remove(uiName);
         }
         else
         {
-            Debug.LogError("panelDic不存在此UI!");
+            Debug.LogError("PanelDic Dont Exist This UI!");
         }
     }
 
     //销毁所有UI实例
     public void ClearPanelDic()
     {
-        var v = panelDic.Values;
-        for (int i = 0; i < v.Count; i++)
+        var panels = panelDic.Values;
+        for (int i = 0; i < panels.Count; i++)
         {
-            Destroy(v.ElementAt(i));
+            Destroy(panels.ElementAt(i));
         }
         panelDic.Clear();
-    }
-
-    //清理所有缓存
-    public void ClearAllCache()
-    {
-        panelCacheDic.Clear();
     }
 }

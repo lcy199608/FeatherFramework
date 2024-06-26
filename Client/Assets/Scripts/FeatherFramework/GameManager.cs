@@ -27,6 +27,8 @@ public static class GameManager
         ConfigMgr.Instance.InitConfig();
         //红点
         RedDotSystem.Instance.InitRedDotTreeNode();
+        //UI
+        UIMgr.Instance.CreateUICanvas();
     }
 
     /// <summary>
