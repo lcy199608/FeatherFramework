@@ -1,8 +1,11 @@
-﻿using System;
+﻿using Sirenix.Utilities;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.Timeline.Actions;
 using UnityEngine;
+using UnityEngine.Analytics;
 using UnityEngine.Events;
 
 public enum UILayer
@@ -20,15 +23,21 @@ public enum UIType
     Child,
 }
 
-public class UIInfo
+public class UIInfo<T>
 {
     public string Name;
     public UILayer Layer;
+    public T PanelSrc;
+    public object UIData;
+    public Action<T> OnComplete;
 
-    public UIInfo(string name, UILayer layer = UILayer.Middle)
+    public UIInfo(string name, T panelSrc,UILayer layer = UILayer.Middle,object uiData = null,Action<T> onComplete = null)
     {
         Name = name;
         Layer = layer;
+        PanelSrc = panelSrc;
+        UIData = uiData;
+        OnComplete = onComplete;
     }
 }
 
@@ -36,6 +45,8 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
 {
     public const string uiPath = "Res/UI/";
     private Dictionary<string, GameObject> panelDic = new Dictionary<string, GameObject>(); //当前打开过的UI
+    private Stack<BasePanel> openUIStack = new Stack<BasePanel>(); //打开新的page时，先隐藏当前的page。关闭当前page时，再显示上一个page。
+    private Queue<UIInfo<BasePanel>> uiQueue = new Queue<UIInfo<BasePanel>>(); //UI队列，用于按顺序打开UI。
 
     public Canvas UICanvas;
     public Camera UICamera;
@@ -67,7 +78,7 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
         }
     }
 
-    public void ShowUI<T>(UILayer layer = UILayer.Middle,object uiData = null,Action onCompleted = null)
+    public void ShowUI<T>(UILayer layer = UILayer.Middle,object uiData = null,Action<T> onComplete = null) where T : BasePanel
     {
         if (UICanvas == null)
         {
@@ -78,7 +89,6 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
         if (panelDic.ContainsKey(uiName))
         {
             InitShowUI<T>(panelDic[uiName], layer);
-            onCompleted?.Invoke();
         }
         else
         {
@@ -90,9 +100,25 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
                 panelSrc.OnInit();
                 InitShowUI<T>(panelTemp, layer);
                 panelDic.Add(uiName, panelTemp);
-                onCompleted?.Invoke();
             });
         }
+    }
+
+    public void ShowUIQueue(Queue<UIInfo<BasePanel>> infos)
+    {
+        if(infos == null || infos.Count == 0)
+        {
+            return;
+        }
+
+        uiQueue = infos;
+        if(openUIStack.Count > 0)
+        {
+            openUIStack.Peek().gameObject.Hide();
+        }
+
+        var uiInfo = infos.Dequeue();
+        //TODO:UI队列的处理
     }
 
     public void CreateUICanvas()
@@ -111,7 +137,7 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
     }
 
     // 初始化要显示的UI
-    void InitShowUI<T>(GameObject panel, UILayer layer)
+    void InitShowUI<T>(GameObject panel, UILayer layer,Action<T> onComplete = null)
     {
         switch (layer)
         {
@@ -138,33 +164,57 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
         panel.transform.SetAsLastSibling();
         panel.gameObject.SetActive(true);
 
-        var panelSrc = panel.GetComponent<T>() as BasePanel;
+        var src = panel.GetComponent<T>();
+        var panelSrc = src as BasePanel;
         panelSrc.OnShow();
+        onComplete?.Invoke(src);
+        Debug.LogError(panelSrc.IsStackable);
+        if(!panelSrc.IsStackable)
+        {
+            if(openUIStack.Count > 0)
+            {
+                BasePanel top = openUIStack.Peek();
+                top.gameObject.Hide();
+            }
+            openUIStack.Push(panelSrc);
+        }
     }
 
     public void HideUI(string uiName)
     {
-        panelDic[uiName].GetComponent<BasePanel>().OnHide();
+        if(panelDic.TryGetValue(uiName,out var panel))
+        {
+            BasePanel panelSrc = panel.GetComponent<BasePanel>();
+            panelSrc.OnHide();
+            if (openUIStack.Count > 0)
+            {
+                BasePanel top = openUIStack.Peek();
+                if (top == panelSrc)
+                {
+                    openUIStack.Pop();
+                    if (openUIStack.Count > 0)
+                    {
+                        openUIStack.Peek().gameObject.Show();
+                    }
+                }
+            }
+        }
+        else
+        {
+            Debug.LogError("Dont Exist This UI");
+        }
     }
-    public void HideUI<T>()
+    public void HideUI<T>() where T : BasePanel
     {
         var uiName = typeof(T).Name;
-        panelDic[uiName].GetComponent<BasePanel>().OnHide();
+        HideUI(uiName);
     }
 
     public void HideAllUI()
     {
-        panelDic.Values.ToList().ForEach(panel => 
+        panelDic.Keys.ForEach(panelName =>
         {
-            try
-            {
-                panel.GetComponent<BasePanel>().OnHide();
-                panel.SetActive(false);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError("HideAllUI Throw Exception! \n" + e.Message);
-            }
+            HideUI(panelName);
         });
     }
 
@@ -182,22 +232,14 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
     }
 
     //移除指定UI实例
-    public void RemoveSpecifiedUI<T>()
+    public void RemoveSpecifiedUI<T>() where T : BasePanel
     {
         var uiName = typeof(T).Name;
-        if (panelDic.ContainsKey(uiName))
-        {
-            panelDic[uiName].Destroy();
-            panelDic.Remove(uiName);
-        }
-        else
-        {
-            Debug.LogError("PanelDic Dont Exist This UI!");
-        }
+        RemoveSpecifiedUI(uiName);
     }
 
     //销毁所有UI实例
-    public void ClearPanelDic()
+    public void RemoveAllUI()
     {
         var panels = panelDic.Values;
         for (int i = 0; i < panels.Count; i++)
