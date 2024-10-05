@@ -9,7 +9,7 @@ using System;
 using System.ComponentModel;
 using UnityEngine.UI;
 
-public class AutoBuildTemplate
+public class AutoGenerateTemplate
 {
     public static string UIClass =
  @"using UnityEngine;
@@ -20,22 +20,24 @@ using System.Collections.Generic;
 using DG.Tweening;
 public class #类名# : BasePanel
 {
-    public override void ShowPanel()
+    public override bool IsStackable => false;
+    public override bool IsRoot => false;
+    
+    public override void OnShow()
     {
         
     }
 
-    public override void HidePanel()
+    public override void OnHide()
     {
-
+        gameObject.SetActive(false);
     }
 
 //auto
     #成员#
-
-    public override void Init()
+    public override void OnInit()
     {
-        base.Init();
+        base.OnInit();
         #查找#
     }
 }
@@ -43,7 +45,7 @@ public class #类名# : BasePanel
 }
 
 
-public class AutoBuild
+public class AutoGenerateUIScript
 {
 
     [MenuItem("LcyFramework/生成或刷新UI脚本 %g")]
@@ -199,7 +201,7 @@ public class AutoBuild
                 //auto 上面的部分
                 string unchangeStr = Regex.Split(classStr, splitStr, RegexOptions.IgnoreCase)[0];
                 //auto 下面的部分
-                string changeStr = Regex.Split(AutoBuildTemplate.UIClass, splitStr, RegexOptions.IgnoreCase)[1];
+                string changeStr = Regex.Split(AutoGenerateTemplate.UIClass, splitStr, RegexOptions.IgnoreCase)[1];
 
                 StringBuilder build = new StringBuilder();
                 build.Append(unchangeStr);
@@ -209,7 +211,7 @@ public class AutoBuild
             }
             else
             {
-                classStr = AutoBuildTemplate.UIClass;
+                classStr = AutoGenerateTemplate.UIClass;
             }
 
             classStr = classStr.Replace("#类名#", selectobj.name);

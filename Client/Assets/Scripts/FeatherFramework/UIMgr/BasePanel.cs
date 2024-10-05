@@ -15,7 +15,15 @@ public abstract class BasePanel : MonoBehaviour
         protected set;
     }
 
-    protected bool isStackable = false;
+    /// <summary>
+    /// 是否为根页面（同时只能存在一个根页面,打开新的根页面会隐藏所有弹窗）
+    /// </summary>
+    public virtual bool IsRoot
+    {
+        get;
+        protected set;
+    }
+
     public virtual void OnInit() { }
     public abstract void OnShow();
     public abstract void OnHide();
