@@ -4,6 +4,11 @@ using UnityEngine;
 using System.IO;
 using ES3Internal;
 
+#if UNITY_VISUAL_SCRIPTING
+[Unity.VisualScripting.IncludeInSettings(true)]
+#elif BOLT_VISUAL_SCRIPTING
+[Ludiq.IncludeInSettings(true)]
+#endif
 public class ES3Spreadsheet
 {
 	private int cols = 0;
@@ -15,7 +20,7 @@ public class ES3Spreadsheet
 	private const char COMMA_CHAR = ',';
 	private const char NEWLINE_CHAR = '\n';
 	private const string ESCAPED_QUOTE = "\"\"";
-	private static char[] CHARS_TO_ESCAPE = { ',', '"', '\n', ' ' };
+	private static char[] CHARS_TO_ESCAPE = { ',', '"', '\n'};
 
 	public int ColumnCount
 	{
@@ -27,32 +32,59 @@ public class ES3Spreadsheet
 		get{ return rows; }
 	}
 
-	public void SetCell<T>(int col, int row, T value)
-	{
+    public int GetColumnLength(int col)
+    {
+        if (col >= cols)
+            return 0;
+
+        int maxRow = -1;
+
+        foreach(var index in cells.Keys)
+            if (index.col == col && index.row > maxRow)
+                maxRow = index.row;
+
+        return maxRow+1;
+    }
+
+    public int GetRowLength(int row)
+    {
+        if (row >= rows)
+            return 0;
+
+        int maxCol = -1;
+
+        foreach (var index in cells.Keys)
+            if (index.row == row && index.col > maxCol)
+                maxCol = index.col;
+
+        return maxCol + 1;
+    }
+
+    public void SetCell(int col, int row, object value)
+    {
+        var type = value.GetType();
+
         // If we're writing a string, add it without formatting.
-        if (value.GetType() == typeof(string))
-		{
-			SetCellString(col, row, (string)(object)value);
-			return;
-		}
+        if (type == typeof(string))
+        {
+            SetCellString(col, row, (string)value);
+            return;
+        }
 
-		var settings = new ES3Settings ();
-		using(var ms = new MemoryStream())
-		{
-			using (var jsonWriter = new ES3JSONWriter (ms, settings, false, false))
-				jsonWriter.Write(value, ES3.ReferenceMode.ByValue);
+        var settings = new ES3Settings();
+        if (ES3Reflection.IsPrimitive(type))
+            SetCellString(col, row, value.ToString());
+        else
+            SetCellString(col, row, settings.encoding.GetString(ES3.Serialize(value, ES3TypeMgr.GetOrCreateES3Type(type))));
 
-			SetCellString(col, row, settings.encoding.GetString(ms.ToArray()));
-		}
+        // Expand the spreadsheet if necessary.
+        if (col >= cols)
+            cols = (col + 1);
+        if (row >= rows)
+            rows = (row + 1);
+    }
 
-		// Expand the spreadsheet if necessary.
-		if(col >= cols)
-			cols = (col+1);
-		if(row >= rows)
-			rows = (row+1);
-	}
-
-	private void SetCellString(int col, int row, string value)
+    private void SetCellString(int col, int row, string value)
 	{
 		cells [new Index (col, row)] = value;
 
@@ -74,14 +106,14 @@ public class ES3Spreadsheet
         return (T)val;
 	}
 
-    internal object GetCell(System.Type type, int col, int row)
+    public object GetCell(System.Type type, int col, int row)
     {
         string value;
 
         if (col >= cols || row >= rows)
             throw new System.IndexOutOfRangeException("Cell (" + col + ", " + row + ") is out of bounds of spreadsheet (" + cols + ", " + rows + ").");
 
-        if (!cells.TryGetValue(new Index(col, row), out value) || string.IsNullOrEmpty(value))
+        if (!cells.TryGetValue(new Index(col, row), out value) || value == null)
             return null;
 
         // If we're loading a string, simply return the string value.
@@ -92,14 +124,7 @@ public class ES3Spreadsheet
         }
 
         var settings = new ES3Settings();
-        using (var ms = new MemoryStream(settings.encoding.GetBytes(value)))
-        {
-            using (var jsonReader = new ES3JSONReader(ms, settings, false))
-            {
-                var obj = ES3TypeMgr.GetOrCreateES3Type(type, true).Read<object>(jsonReader);
-                return obj;
-            }
-        }
+        return ES3.Deserialize(ES3TypeMgr.GetOrCreateES3Type(type, true), settings.encoding.GetBytes(value), settings);
     }
 
     public void Load(string filePath)
@@ -234,7 +259,9 @@ public class ES3Spreadsheet
 
 	private static string Escape(string str, bool isAlreadyWrappedInQuotes=false)
 	{
-		if(string.IsNullOrEmpty(str))
+        if (str == "")
+            return "\"\"";
+		else if(str == null)
 			return null;
 
 		// Now escape any other quotes.
@@ -242,7 +269,7 @@ public class ES3Spreadsheet
 			str = str.Replace(QUOTE, ESCAPED_QUOTE);
 		
 		// If there's chars to escape, wrap the value in quotes.
-		if(str.IndexOfAny(CHARS_TO_ESCAPE) > -1)
+		if(str.IndexOfAny(CHARS_TO_ESCAPE) > -1 || StartsOrEndsWithWhitespace(str))
 			str = QUOTE + str + QUOTE;
 		return str;
 	}
@@ -256,6 +283,20 @@ public class ES3Spreadsheet
 				str = str.Replace(ESCAPED_QUOTE, QUOTE);
 		}
 		return str;
+	}
+
+	private static bool StartsOrEndsWithWhitespace(string str)
+	{
+		if (string.IsNullOrEmpty(str))
+			return false;
+
+		if (char.IsWhiteSpace(str[0]))
+			return true;
+
+		if (char.IsWhiteSpace(str[str.Length - 1]))
+			return true;
+
+		return false;
 	}
 
 	private string[,] ToArray()

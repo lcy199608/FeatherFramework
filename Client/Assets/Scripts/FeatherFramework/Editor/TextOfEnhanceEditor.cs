@@ -52,6 +52,7 @@ public class TextOfEnhanceEditor : Editor
         GameObject text = new GameObject("Text");
         text.transform.SetParent(go.transform);
         text.transform.localPosition = Vector3.zero;
+        text.transform.localScale = Vector3.one;
         TextOfEnhance com = text.AddComponent<TextOfEnhance>();
         com.color = Color.black;
         com.alignment = TextAnchor.MiddleCenter;

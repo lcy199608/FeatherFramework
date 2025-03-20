@@ -719,7 +719,24 @@ PlayerSettings:
   webGLMemoryGeometricGrowthCap: 96
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Standalone: ODIN_INSPECTOR;ODIN_INSPECTOR_3;ODIN_INSPECTOR_3_1
+    Android: ES3_UGUI;DOTWEEN
+    EmbeddedLinux: ES3_UGUI;DOTWEEN
+    GameCoreScarlett: DOTWEEN
+    GameCoreXboxOne: DOTWEEN
+    LinuxHeadlessSimulation: ES3_UGUI;DOTWEEN
+    Nintendo Switch: ES3_UGUI;DOTWEEN
+    PS4: ES3_UGUI;DOTWEEN
+    PS5: DOTWEEN
+    QNX: ES3_UGUI;DOTWEEN
+    Server: ES3_UGUI
+    Stadia: DOTWEEN
+    Standalone: ODIN_INSPECTOR;ODIN_INSPECTOR_3;ODIN_INSPECTOR_3_1;ES3_UGUI;ODIN_INSPECTOR_3_2;ODIN_INSPECTOR_3_3;DOTWEEN
+    VisionOS: ES3_UGUI;DOTWEEN
+    WebGL: ES3_UGUI;DOTWEEN
+    Windows Store Apps: ES3_UGUI;DOTWEEN
+    XboxOne: ES3_UGUI;DOTWEEN
+    iPhone: ES3_UGUI;DOTWEEN
+    tvOS: ES3_UGUI;DOTWEEN
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend: {}

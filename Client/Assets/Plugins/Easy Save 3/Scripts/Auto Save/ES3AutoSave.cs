@@ -3,11 +3,30 @@ using System.Collections.Generic;
 
 public class ES3AutoSave : MonoBehaviour, ISerializationCallbackReceiver
 {
+    public bool saveLayer = true;
+    public bool saveTag = true;
+    public bool saveName = true;
+    public bool saveHideFlags = true;
+    public bool saveActive = true;
     public bool saveChildren = false;
+    public bool saveDestroyed = true;
+
     private bool isQuitting = false;
 
     //[HideInInspector]
     public List<Component> componentsToSave = new List<Component>();
+
+    public void Reset()
+    {
+        // Initialise saveLayer (etc) to false for all new Components.
+        saveLayer = false;
+        saveTag = false;
+        saveName = false;
+        saveHideFlags = false;
+        saveActive = false;
+        saveChildren = false;
+        saveDestroyed = false;
+    }
 
     public void Awake()
     {
@@ -27,7 +46,7 @@ public class ES3AutoSave : MonoBehaviour, ISerializationCallbackReceiver
         // If this is being destroyed, but not because the application is quitting,
         // remove the AutoSave from the manager.
         if (!isQuitting)
-            ES3AutoSaveMgr.RemoveAutoSave(this);
+            ES3AutoSaveMgr.DestroyAutoSave(this);
     }
     public void OnBeforeSerialize() { }
     public void OnAfterDeserialize()

@@ -123,8 +123,13 @@ public abstract class ES3Writer : IDisposable
     /// <param name="value">The value we want to write.</param>
     public virtual void Write<T>(string key, object value)
     {
-        if(typeof(T) == typeof(object))
-            Write(value.GetType(), key, value);
+        if (typeof(T) == typeof(object))
+        {
+			if (value == null)
+				Write(typeof(System.Object), key, null);
+			else
+				Write(value.GetType(), key, value);
+        }
         else
             Write(typeof(T), key, value);
     }
@@ -135,7 +140,7 @@ public abstract class ES3Writer : IDisposable
     /// <param name="type">The type we want to use for the header, and to retrieve an ES3Type.</param>
     [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
 	public virtual void Write(Type type, string key, object value)
-	{ 
+	{
 		StartWriteProperty(key);
 		StartWriteObject(key);
 		WriteType(type);
@@ -164,13 +169,27 @@ public abstract class ES3Writer : IDisposable
 	[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
 	public virtual void Write(object value, ES3Type type, ES3.ReferenceMode memberReferenceMode = ES3.ReferenceMode.ByRef)
 	{
+        // Note that we have to check UnityEngine.Object types for null by casting it first, otherwise
+        // it will always return false.
+        if (value == null || (ES3Reflection.IsAssignableFrom(typeof(UnityEngine.Object), value.GetType()) && value as UnityEngine.Object == null))
+        {
+            WriteNull();
+            return;
+        }
+
         // Deal with System.Objects
-        if (type.type == typeof(object))
+        if (type == null || type.type == typeof(object))
         {
             var valueType = value.GetType();
             type = ES3TypeMgr.GetOrCreateES3Type(valueType);
+
+            if(type == null)
+                throw new NotSupportedException("Types of " + valueType + " are not supported. Please see the Supported Types guide for more information: https://docs.moodkie.com/easy-save-3/es3-supported-types/");
+
             if (!type.isCollection && !type.isDictionary)
             {
+				TryOnBeforeSerialize(value);
+
                 StartWriteObject(null);
                 WriteType(valueType);
 
@@ -181,20 +200,17 @@ public abstract class ES3Writer : IDisposable
             }
         }
 
-        // Note that we have to check UnityEngine.Object types for null by casting it first, otherwise
-        // it will always return false.
-        if (value == null || (type.isES3TypeUnityObject && ((UnityEngine.Object)value) == null))
-		{ 
-			WriteNull(); 
-			return; 
-		}
-
 		if(type == null)
 			throw new ArgumentNullException("ES3Type argument cannot be null.");
-		if(type.isUnsupported)
-			throw new NotSupportedException("Types of "+type.type+" are not supported.");
+        if (type.isUnsupported)
+        {
+            if(type.isCollection || type.isDictionary)
+                throw new NotSupportedException(type.type + " is not supported because it's element type is not supported. Please see the Supported Types guide for more information: https://docs.moodkie.com/easy-save-3/es3-supported-types/");
+            else
+                throw new NotSupportedException("Types of " + type.type + " are not supported. Please see the Supported Types guide for more information: https://docs.moodkie.com/easy-save-3/es3-supported-types/");
+        }
 
-        if (type.isPrimitive)
+        if (type.isPrimitive || type.isEnum)
             type.Write(value, this);
         else if (type.isCollection)
         {
@@ -210,6 +226,8 @@ public abstract class ES3Writer : IDisposable
         }
         else
         {
+			TryOnBeforeSerialize(value);
+
             if (type.type == typeof(GameObject))
                 ((ES3Type_GameObject)type).saveChildren = settings.saveChildren;
 
@@ -223,29 +241,44 @@ public abstract class ES3Writer : IDisposable
         }
 	}
 
-	internal virtual void WriteRef(UnityEngine.Object obj)
+	internal static void TryOnBeforeSerialize(object obj)
 	{
-        var refMgr = ES3ReferenceMgrBase.Current;
+        if (obj is ISerializationCallbackReceiver scr)
+            scr.OnBeforeSerialize();
+    }
+
+    internal virtual void WriteRef(UnityEngine.Object obj)
+    {
+        WriteRef(obj, ES3ReferenceMgrBase.referencePropertyName);
+    }
+
+    internal virtual void WriteRef(UnityEngine.Object obj, string propertyName)
+    {
+        WriteRef(obj, ES3ReferenceMgrBase.referencePropertyName, ES3ReferenceMgrBase.Current);
+    }
+
+    internal virtual void WriteRef(UnityEngine.Object obj, string propertyName, ES3ReferenceMgrBase refMgr)
+    {
         if (refMgr == null)
-            throw new InvalidOperationException("An Easy Save 3 Manager is required to save references. To add one to your scene, exit playmode and go to Assets > Easy Save 3 > Add Manager to Scene");
+            throw new InvalidOperationException($"An Easy Save 3 Manager is required to save references. To add one to your scene, exit playmode and go to Tools > Easy Save 3 > Add Manager to Scene. Object being saved by reference is {obj.GetType()} with name {obj.name}.");
 
         // Get the reference ID, if it exists, and store it.
         long id = refMgr.Get(obj);
         // If reference ID doesn't exist, create reference.
         if (id == -1)
             id = refMgr.Add(obj);
-        WriteProperty(ES3ReferenceMgrBase.referencePropertyName, id.ToString());
+        WriteProperty(propertyName, id.ToString());
     }
 
-	#endregion
+    #endregion
 
-	/* Writes a property as a name value pair. */
-	#region WriteProperty(name, value) methods
+    /* Writes a property as a name value pair. */
+    #region WriteProperty(name, value) methods
 
-	/// <summary>Writes a field or property to the writer. Note that this should only be called within an ES3Type.</summary>
-	/// <param name="name">The name of the field or property.</param>
-	/// <param name="value">The value we want to write.</param>
-	public virtual void WriteProperty(string name, object value)
+    /// <summary>Writes a field or property to the writer. Note that this should only be called within an ES3Type.</summary>
+    /// <param name="name">The name of the field or property.</param>
+    /// <param name="value">The value we want to write.</param>
+    public virtual void WriteProperty(string name, object value)
 	{
         WriteProperty(name, value, settings.memberReferenceMode);
 	}
@@ -259,7 +292,9 @@ public abstract class ES3Writer : IDisposable
         if (SerializationDepthLimitExceeded())
             return;
 
-        StartWriteProperty(name); Write(value, memberReferenceMode); EndWriteProperty(name);
+        StartWriteProperty(name); 
+        Write(value, memberReferenceMode); 
+        EndWriteProperty(name);
 	}
 
     /// <summary>Writes a field or property to the writer. Note that this should only be called within an ES3Type.</summary>
@@ -460,7 +495,7 @@ public abstract class ES3Writer : IDisposable
 	protected void Merge(ES3Reader reader)
 	{
 		foreach(KeyValuePair<string,ES3Data> kvp in reader.RawEnumerator)
-			if(!keysToDelete.Contains(kvp.Key))
+			if(!keysToDelete.Contains(kvp.Key) || kvp.Value.type == null) // Don't add keys whose data is of a type which no longer exists in the project.
 				Write(kvp.Key, kvp.Value.type.type, kvp.Value.bytes);
 	}
 
