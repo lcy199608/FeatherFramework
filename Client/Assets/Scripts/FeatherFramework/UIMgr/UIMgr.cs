@@ -1,5 +1,4 @@
-﻿using Sirenix.Utilities;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -138,7 +137,7 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
             string topUIName = openUIStack.Last().Name;
             if (panelCacheDic.TryGetValue(topUIName, out var topUI))
             {
-                topUI.gameObject.Hide();
+                topUI.gameObject.SetActive(false);
             }
         }
         for (int i = infos.Length - 1; i >= 0; i--)
@@ -211,7 +210,7 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
                     {
                         if (panelCacheDic.TryGetValue(topUIName, out var topUI))
                         {
-                            topUI.gameObject.Hide();
+                            topUI.gameObject.SetActive(false);
                         }
                         openUIStack.Add(new UIInfo(panel.name, layer, panelSrc.uiData, onComplete));
                     }
@@ -242,7 +241,7 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
                         topUIInfo = openUIStack.Last();
                         if (panelCacheDic.TryGetValue(topUIInfo.Name, out var topPanel))
                         {
-                            topPanel.gameObject.Show();
+                            topPanel.gameObject.SetActive(true);
                         }
                         else{
                             ShowUI(topUIInfo.Name, topUIInfo.Layer, topUIInfo.UIData, topUIInfo.OnComplete);
@@ -285,10 +284,10 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
 
     public void HideAllUI()
     {
-        panelCacheDic.Values.ForEach(panel =>
+        foreach (var panel in panelCacheDic.Values)
         {
-            panel.Hide();
-        });
+            panel.SetActive(false);
+        }
         openUIStack.Clear();
     }
 
@@ -309,7 +308,7 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
                     break;
                 }
             }
-            uiPanel.Destroy();
+            Destroy(uiPanel);
             panelCacheDic.Remove(uiName);
         }
         else

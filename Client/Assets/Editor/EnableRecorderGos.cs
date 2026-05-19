@@ -25,7 +25,7 @@ public class EnableRecorderGos : MonoBehaviour
             //加载对象
             GameObject root = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
 
-            foreach (var go in root.DescendantsAndSelf()
+            foreach (var go in EnumerateDescendantsAndSelf(root)
                .Where(n => n.GetComponent<ActivationRecorder>()))
             {
                 go.SetActive(true);
@@ -73,5 +73,26 @@ public class EnableRecorderGos : MonoBehaviour
     {
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
+    }
+
+    static IEnumerable<GameObject> EnumerateDescendantsAndSelf(GameObject root)
+    {
+        if (root == null)
+        {
+            yield break;
+        }
+
+        var stack = new Stack<Transform>();
+        stack.Push(root.transform);
+        while (stack.Count > 0)
+        {
+            var current = stack.Pop();
+            yield return current.gameObject;
+
+            for (int i = current.childCount - 1; i >= 0; i--)
+            {
+                stack.Push(current.GetChild(i));
+            }
+        }
     }
 }
