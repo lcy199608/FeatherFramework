@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class BasePanel : MonoBehaviour
+public abstract class PanelBase : MonoBehaviour
 {
     public object uiData;
 

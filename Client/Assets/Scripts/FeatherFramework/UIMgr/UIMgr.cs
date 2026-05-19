@@ -28,9 +28,9 @@ public class UIInfo
     public string Name;
     public UILayer Layer;
     public object UIData;
-    public Action<BasePanel> OnComplete;
+    public Action<PanelBase> OnComplete;
 
-    public UIInfo(string name, UILayer layer = UILayer.Middle, object uiData = null, Action<BasePanel> onComplete = null)
+    public UIInfo(string name, UILayer layer = UILayer.Middle, object uiData = null, Action<PanelBase> onComplete = null)
     {
         Name = name;
         Layer = layer;
@@ -92,13 +92,13 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
         }
     }
 
-    public void ShowUI<T>(UILayer layer = UILayer.Middle, object uiData = null, Action<BasePanel> onComplete = null) where T : BasePanel
+    public void ShowUI<T>(UILayer layer = UILayer.Middle, object uiData = null, Action<PanelBase> onComplete = null) where T : PanelBase
     {
         var uiName = typeof(T).Name;
         ShowUI(uiName, layer, uiData, onComplete);
     }
 
-    public void ShowUI(string uiName, UILayer layer = UILayer.Middle, object uiData = null, Action<BasePanel> onComplete = null)
+    public void ShowUI(string uiName, UILayer layer = UILayer.Middle, object uiData = null, Action<PanelBase> onComplete = null)
     {
         if (UICanvas == null)
         {
@@ -114,7 +114,7 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
             var panel = ResMgr.Instance.Load<GameObject>(uiPath + uiName + ".prefab");
             var panelTemp = Instantiate(panel);
             panelTemp.name = uiName;
-            var panelSrc = panelTemp.GetComponent<BasePanel>();
+            var panelSrc = panelTemp.GetComponent<PanelBase>();
             panelSrc.uiData = uiData;
             panelSrc.OnInit();
             InitShowUI(panelTemp, layer, onComplete);
@@ -163,7 +163,7 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
     }
 
     // 初始化要显示的UI
-    void InitShowUI(GameObject panel, UILayer layer, Action<BasePanel> onComplete = null)
+    void InitShowUI(GameObject panel, UILayer layer, Action<PanelBase> onComplete = null)
     {
         switch (layer)
         {
@@ -190,7 +190,7 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
         panel.transform.SetAsLastSibling();
         panel.gameObject.SetActive(true);
 
-        var panelSrc = panel.GetComponent<BasePanel>();
+        var panelSrc = panel.GetComponent<PanelBase>();
         panelSrc.OnShow();
         onComplete?.Invoke(panelSrc);
 
@@ -228,7 +228,7 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
     {
         if (panelCacheDic.TryGetValue(uiName, out var panel))
         {
-            BasePanel panelSrc = panel.GetComponent<BasePanel>();
+            PanelBase panelSrc = panel.GetComponent<PanelBase>();
             panelSrc.OnHide();
             if (openUIStack.Count > 0)
             {
@@ -276,7 +276,7 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
         }
     }
 
-    public void HideUI<T>() where T : BasePanel
+    public void HideUI<T>() where T : PanelBase
     {
         var uiName = typeof(T).Name;
         HideUI(uiName);
@@ -318,7 +318,7 @@ public class UIMgr : DontDestroyMonoSingleton<UIMgr>
     }
 
     //移除指定UI实例
-    public void RemoveSpecifiedUI<T>() where T : BasePanel
+    public void RemoveSpecifiedUI<T>() where T : PanelBase
     {
         var uiName = typeof(T).Name;
         RemoveSpecifiedUI(uiName);

@@ -18,7 +18,7 @@ using UnityEngine.EventSystems;
 using System;
 using System.Collections.Generic;
 using DG.Tweening;
-public class #类名# : BasePanel
+public class #类名# : PanelBase
 {
     public override bool IsStackable => false;
     public override bool IsRoot => false;
@@ -48,7 +48,7 @@ public class #类名# : BasePanel
 public class AutoGenerateUIScript
 {
 
-    [MenuItem("LcyFramework/生成或刷新UI脚本 %g")]
+    [MenuItem("FeatherFramework/生成或刷新UI脚本 %g")]
     public static void BuildUIScript()
     {
         bool temp = EditorUtility.DisplayDialog("提示", "确定生成或刷新UI脚本吗？", "确定", "取消");
