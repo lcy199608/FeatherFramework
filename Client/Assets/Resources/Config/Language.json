@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "ChineseSimplified": "测试1",
+    "ChineseTraditional": "測試1",
+    "English": "Test1",
+    "Japanese": "テスト1",
+    "Korean": "테스트1"
+  },
+  {
+    "id": 2,
+    "ChineseSimplified": "测试2",
+    "ChineseTraditional": "測試2",
+    "English": "Test2",
+    "Japanese": "テスト2",
+    "Korean": "테스트2"
+  }
+]

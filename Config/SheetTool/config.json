@@ -1,0 +1,20 @@
+{
+  "excelDir": "./Excels",
+  "enumFilePattern": "^Enums([_-].+)?\\.xlsx$",
+  "namespace": "cfg",
+  "enumSheetName": "",
+  "arraySeparator": ",",
+  "outputCodeDir": "../../Client/Assets/Gen",
+  "outputDataDir": "../../Client/Assets/Resources/Config",
+  "tableOverrides": {
+    "Language": {
+      "rowName": "LanguageInfo"
+    },
+    "RedDot": {
+      "rowName": "RedDotInfo",
+      "indexes": [
+        "type"
+      ]
+    }
+  }
+}

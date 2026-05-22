@@ -1,0 +1,14 @@
+{
+  "name": "feather-sheet-tool",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Excel based config export tool for FeatherFramework",
+  "scripts": {
+    "sync": "node ./cli.js sync",
+    "validate": "node ./cli.js validate",
+    "export": "node ./cli.js export"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}

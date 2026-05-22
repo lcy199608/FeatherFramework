@@ -35,7 +35,6 @@ MonoBehaviour:
     assemblyNames:
     - Assembly-CSharp
     - Assembly-CSharp-firstpass
-    - Luban.Runtime
     - Sirenix.OdinInspector.Modules.Unity.Addressables
     showAdvancedSettings: 0
   addMgrToSceneAutomatically: 0

@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class LanguageMgr : Singleton<LanguageMgr>
 {
@@ -61,6 +60,7 @@ public class LanguageMgr : Singleton<LanguageMgr>
 
         set 
         {
+            currentLanguage = value;
             SaveDataMgr.SetSystemData(languageFile, value,true);
             EventCenter.Instance.EventTrigger("LanguageSwitch");
         }

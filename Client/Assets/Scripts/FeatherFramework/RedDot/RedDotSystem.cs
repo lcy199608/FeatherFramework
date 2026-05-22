@@ -15,6 +15,7 @@ public class RedDotSystem : Singleton<RedDotSystem>
     /// </summary>
     public void InitRedDotTreeNode()
     {
+        redDotTreeList.Clear();
         InitRedDotData();
         string rootPath = GetPath(RedDotType.Root); //获取根节点路径
         mRootNode = new RedDotNode(rootPath, rootPath,null); //根节点
