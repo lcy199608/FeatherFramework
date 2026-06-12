@@ -14,5 +14,13 @@
     "English": "Test2",
     "Japanese": "テスト2",
     "Korean": "테스트2"
+  },
+  {
+    "id": 3,
+    "ChineseSimplified": "开始游戏",
+    "ChineseTraditional": "開始遊戲",
+    "English": "Start Game",
+    "Japanese": "ゲーム開始",
+    "Korean": "게임 시작"
   }
 ]

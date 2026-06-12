@@ -1,0 +1,47 @@
+[
+  {
+    "id": 2001,
+    "name": "Slime",
+    "quality": 1,
+    "dropItemId": 1002,
+    "dropItemIds": [
+      1002,
+      1003
+    ],
+    "skillLevels": [
+      1,
+      2
+    ]
+  },
+  {
+    "id": 2002,
+    "name": "Goblin",
+    "quality": 2,
+    "dropItemId": 1003,
+    "dropItemIds": [
+      1001,
+      1003
+    ],
+    "skillLevels": [
+      2,
+      3,
+      4
+    ]
+  },
+  {
+    "id": 2003,
+    "name": "Dragon",
+    "quality": 3,
+    "dropItemId": 1001,
+    "dropItemIds": [
+      1001,
+      1002,
+      1003
+    ],
+    "skillLevels": [
+      5,
+      6,
+      7
+    ]
+  }
+]

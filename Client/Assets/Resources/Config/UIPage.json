@@ -1,0 +1,20 @@
+[
+  {
+    "id": 3001,
+    "panelType": 1,
+    "titleId": 1,
+    "defaultOpen": true
+  },
+  {
+    "id": 3002,
+    "panelType": 2,
+    "titleId": 2,
+    "defaultOpen": false
+  },
+  {
+    "id": 3003,
+    "panelType": 3,
+    "titleId": 3,
+    "defaultOpen": false
+  }
+]

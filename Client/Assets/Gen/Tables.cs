@@ -9,15 +9,19 @@ namespace cfg
 {
     public sealed class Tables
     {
+        public Item Item { get; }
         public Language Language { get; }
+        public Monster Monster { get; }
         public RedDot RedDot { get; }
-
-        private static readonly byte[] BinaryMagic = { 0x46, 0x43, 0x46, 0x47 };
+        public UIPage UIPage { get; }
 
         private Tables()
         {
+            Item = new Item(LoadRows("Item", ItemInfo.ReadFrom));
             Language = new Language(LoadRows("Language", LanguageInfo.ReadFrom));
+            Monster = new Monster(LoadRows("Monster", MonsterInfo.ReadFrom));
             RedDot = new RedDot(LoadRows("RedDot", RedDotInfo.ReadFrom));
+            UIPage = new UIPage(LoadRows("UIPage", UIPageInfo.ReadFrom));
         }
 
         public static Tables Load()
@@ -25,9 +29,11 @@ namespace cfg
             return new Tables();
         }
 
+        private static readonly byte[] BinaryMagic = { 0x46, 0x43, 0x46, 0x47 };
+
         private static List<T> LoadRows<T>(string tableName, System.Func<BinaryReader, T> readBinaryRow)
         {
-            TextAsset asset = Resources.Load<TextAsset>($"Config/{tableName}");
+            var asset = Resources.Load<TextAsset>($"Config/{tableName}");
             if (asset == null)
             {
                 throw new FileNotFoundException($"Missing config resource: Config/{tableName}");
@@ -38,7 +44,7 @@ namespace cfg
                 return LoadBinaryRows(asset.bytes, readBinaryRow);
             }
 
-            List<T> rows = JsonConvert.DeserializeObject<List<T>>(asset.text);
+            var rows = JsonConvert.DeserializeObject<List<T>>(asset.text);
             return rows ?? new List<T>();
         }
 
@@ -54,12 +60,12 @@ namespace cfg
 
         private static List<T> LoadBinaryRows<T>(byte[] bytes, System.Func<BinaryReader, T> readBinaryRow)
         {
-            using MemoryStream stream = new MemoryStream(bytes);
-            using BinaryReader reader = new BinaryReader(stream);
+            using var stream = new MemoryStream(bytes);
+            using var reader = new BinaryReader(stream);
 
             reader.ReadBytes(BinaryMagic.Length);
             int count = reader.ReadInt32();
-            List<T> rows = new List<T>(count);
+            var rows = new List<T>(count);
             for (int i = 0; i < count; i++)
             {
                 rows.Add(readBinaryRow(reader));
@@ -77,7 +83,7 @@ namespace cfg
         public static List<T> ReadArray<T>(BinaryReader reader, System.Func<BinaryReader, T> readItem)
         {
             int count = reader.ReadInt32();
-            List<T> items = new List<T>(count);
+            var items = new List<T>(count);
             for (int i = 0; i < count; i++)
             {
                 items.Add(readItem(reader));

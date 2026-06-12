@@ -23,6 +23,6 @@ namespace cfg
         /// <summary>
         /// 测试红点子节点
         /// </summary>
-        RedDotTestChild2 = 5
+        RedDotTestChild2 = 5,
     }
 }

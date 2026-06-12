@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Process = System.Diagnostics.Process;
 using ProcessStartInfo = System.Diagnostics.ProcessStartInfo;
 using UnityEditor;
@@ -20,7 +21,7 @@ public class ExcelTool : MonoBehaviour
     {
         ConfigImportSettings settings = GetOrCreateSettings();
         string format = settings.importFormat == ConfigImportFormat.Bin ? "bin" : "json";
-        RunSheetTool("sync", $"-- --format {format}");
+        RunSheetTool("sync", $"--format {format}");
     }
 
     [MenuItem("FeatherFramework/Config/Select Import Settings")]
@@ -38,10 +39,66 @@ public class ExcelTool : MonoBehaviour
             return;
         }
 
+        ProcessStartInfo startInfo = CreateSheetToolStartInfo(command, extraArguments);
+
+        Process process;
+        try
+        {
+            process = Process.Start(startInfo);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError($"Failed to start SheetTool process.\nCommand: {startInfo.FileName} {startInfo.Arguments}\n{exception.Message}");
+            return;
+        }
+
+        if (process == null)
+        {
+            Debug.LogError("Failed to start SheetTool process.");
+            return;
+        }
+
+        using (process)
+        {
+            string stdout = process.StandardOutput.ReadToEnd();
+            string stderr = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            if (!string.IsNullOrWhiteSpace(stdout))
+            {
+                Debug.Log(stdout.Trim());
+            }
+
+            if (process.ExitCode != 0)
+            {
+                Debug.LogError(string.IsNullOrWhiteSpace(stderr) ? $"SheetTool exited with code {process.ExitCode}" : stderr.Trim());
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(stderr))
+            {
+                Debug.LogWarning(stderr.Trim());
+            }
+        }
+
+        AssetDatabase.Refresh();
+        Debug.Log($"Excel config {command} finished.");
+    }
+
+    private static ProcessStartInfo CreateSheetToolStartInfo(string command, string extraArguments)
+    {
+        string normalizedExtraArguments = NormalizeExtraArguments(extraArguments);
+        string nodeExecutable = ResolveNodeExecutable();
+        if (string.IsNullOrEmpty(nodeExecutable))
+        {
+            throw new InvalidOperationException(
+                "Unable to locate node. Install Node.js and ensure node is available at a standard path such as /opt/homebrew/bin/node or /usr/local/bin/node.");
+        }
+
         ProcessStartInfo startInfo = new ProcessStartInfo
         {
-            FileName = Application.platform == RuntimePlatform.WindowsEditor ? "npm.cmd" : "npm",
-            Arguments = $"run {command}{extraArguments}",
+            FileName = nodeExecutable,
+            Arguments = $"./cli.js {command}{normalizedExtraArguments}",
             WorkingDirectory = ToolDirectory,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -49,35 +106,62 @@ public class ExcelTool : MonoBehaviour
             CreateNoWindow = true
         };
 
-        using Process process = Process.Start(startInfo);
-        if (process == null)
+        string nodeDirectory = Path.GetDirectoryName(nodeExecutable);
+        if (!string.IsNullOrEmpty(nodeDirectory))
         {
-            Debug.LogError("Failed to start SheetTool process.");
-            return;
+            string currentPath = startInfo.EnvironmentVariables["PATH"] ?? string.Empty;
+            if (!currentPath.Contains(nodeDirectory))
+            {
+                startInfo.EnvironmentVariables["PATH"] = string.IsNullOrEmpty(currentPath)
+                    ? nodeDirectory
+                    : $"{nodeDirectory}{Path.PathSeparator}{currentPath}";
+            }
         }
 
-        string stdout = process.StandardOutput.ReadToEnd();
-        string stderr = process.StandardError.ReadToEnd();
-        process.WaitForExit();
+        return startInfo;
+    }
 
-        if (!string.IsNullOrWhiteSpace(stdout))
+    private static string NormalizeExtraArguments(string extraArguments)
+    {
+        if (string.IsNullOrWhiteSpace(extraArguments))
         {
-            Debug.Log(stdout.Trim());
+            return string.Empty;
         }
 
-        if (process.ExitCode != 0)
+        string normalizedArguments = extraArguments.Trim();
+        if (normalizedArguments.StartsWith("-- "))
         {
-            Debug.LogError(string.IsNullOrWhiteSpace(stderr) ? $"SheetTool exited with code {process.ExitCode}" : stderr.Trim());
-            return;
+            normalizedArguments = normalizedArguments.Substring(3).TrimStart();
         }
 
-        if (!string.IsNullOrWhiteSpace(stderr))
+        return string.IsNullOrEmpty(normalizedArguments)
+            ? string.Empty
+            : $" {normalizedArguments}";
+    }
+
+    private static string ResolveNodeExecutable()
+    {
+        if (Application.platform == RuntimePlatform.WindowsEditor)
         {
-            Debug.LogWarning(stderr.Trim());
+            return "node.exe";
         }
 
-        AssetDatabase.Refresh();
-        Debug.Log($"Excel config {command} finished.");
+        string[] candidatePaths =
+        {
+            "/opt/homebrew/bin/node",
+            "/usr/local/bin/node",
+            "/usr/bin/node"
+        };
+
+        foreach (string candidatePath in candidatePaths)
+        {
+            if (File.Exists(candidatePath))
+            {
+                return candidatePath;
+            }
+        }
+
+        return null;
     }
 
     private static ConfigImportSettings GetOrCreateSettings()

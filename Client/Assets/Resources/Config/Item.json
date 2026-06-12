@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1001,
+    "name": "Gold",
+    "itemType": 1,
+    "maxStack": 999999,
+    "tags": [
+      "money",
+      "core"
+    ]
+  },
+  {
+    "id": 1002,
+    "name": "Potion",
+    "itemType": 2,
+    "maxStack": 99,
+    "tags": [
+      "heal",
+      "battle"
+    ]
+  },
+  {
+    "id": 1003,
+    "name": "IronOre",
+    "itemType": 3,
+    "maxStack": 999,
+    "tags": [
+      "craft",
+      "resource"
+    ]
+  }
+]
