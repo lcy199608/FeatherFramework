@@ -1,0 +1,9 @@
+{
+  "name": "Feather.Editor",
+  "references": [
+    "Feather.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

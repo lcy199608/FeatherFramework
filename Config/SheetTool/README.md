@@ -13,7 +13,7 @@
 
 ## 环境准备
 
-1. 安装 `Node.js`。
+1. 安装 `Node.js 18` 或更高版本。
 2. 在 `Config/SheetTool` 目录执行：
 
 ```bash
@@ -21,7 +21,7 @@ npm install
 ```
 
 3. 把配置表 `xlsx` 文件放进 `Config/SheetTool/Excels`。
-4. 如有特殊主键、索引或行类型命名需求，再修改 [`config.json`](/Users/a112233/UnityProject/FeatherFramework/Config/SheetTool/config.json)。
+4. 如有特殊主键、索引或行类型命名需求，再修改 [`config.json`](config.json)。
 
 ## 目录约定
 
@@ -75,6 +75,7 @@ Assets/Data/ConfigImportSettings.asset
 
 ```bash
 npm run validate
+npm test
 npm run export
 npm run sync
 ```
@@ -82,6 +83,7 @@ npm run sync
 命令说明：
 
 - `validate`：只校验 Excel，不生成文件。
+- `test`：运行导表规则的自动测试。
 - `export`：直接生成代码和 JSON。
 - `sync`：先校验再导出，日常使用就执行这个。
 
@@ -89,15 +91,15 @@ npm run sync
 
 项目里已经接了 Unity 编辑器菜单：
 
-- `Tools/Config/Validate Excel Config`
-- `Tools/Config/Sync Excel Config`
-- `Tools/Config/Select Import Settings`
+- `FeatherFramework/Config/Validate Excel Config`
+- `FeatherFramework/Config/Sync Excel Config`
+- `FeatherFramework/Config/Select Import Settings`
 
 点击后会自动执行对应命令，并在完成后刷新 Unity 资源。
 
 ## 配置文件
 
-主配置文件是 [`config.json`](/Users/a112233/UnityProject/FeatherFramework/Config/SheetTool/config.json)。
+主配置文件是 [`config.json`](config.json)。
 
 关键字段：
 
@@ -257,3 +259,12 @@ ref:Item[]
 - 当前启用格式的数据输出到 `Client/Assets/Resources/Config`
 
 运行时通过 `cfg.Tables.Load()` 自动识别当前资源是 `JSON` 还是 `Bin` 并完成加载。
+
+
+## 输出安全与二进制兼容
+
+导出前校验生成后的 C# 名称冲突、关键字、int32/float32 范围。先生成完整临时结果再替换两个输出目录；提交异常回滚旧目录。保留同名资源 meta，JSON/Bin 切换保留 GUID；删除过期资源时同时删除 meta。不要把输出目录配置到 Excel 源目录、文件系统根目录或相互嵌套的目录。
+
+二进制采用 FCFG + int32(-1) + 行数 + 数据，-1 表示版本 1；新读取器同时接受旧的 FCFG + 行数格式。长度限额为 1,000,000 且不能超过剩余字节，拒绝未知版本、截断、非法 UTF-8 与多余尾部数据。先更新 exporter，再执行 sync 生成代码和数据，不手改产物。
+
+Unity 菜单异步导表，可取消，超时为两分钟。强制杀进程或断电不属于异常回滚保证；如发生在替换阶段，先检查输出目录旁的 .feather-stage-*-backup，再重试导出，勿直接删除唯一备份。

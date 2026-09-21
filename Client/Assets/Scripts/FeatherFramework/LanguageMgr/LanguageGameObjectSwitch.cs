@@ -1,12 +1,14 @@
 ﻿using UnityEngine;
 
-public class LanguageGameObjectSwitch : MonoBehaviour
+public class LanguageGameObjectSwitch : FrameworkBehaviour
 {
     public GameObject CN_S, CN_T, EN, JA, KO;
+    private System.IDisposable languageSubscription;
     private void Start()
     {
+        if (!Services.HasLocalization) return;
         Switch();
-        EventCenter.Instance.AddEventListener("LanguageSwitch", Switch);
+        languageSubscription = Services.Events.Subscribe(FrameworkEvents.LanguageChangedId, Switch);
     }
 
     void Switch()
@@ -36,28 +38,20 @@ public class LanguageGameObjectSwitch : MonoBehaviour
             KO.SetActive(false);
         }
 
-        switch (LanguageMgr.Instance.CurrentLanguage)
+        GameObject target = Services.Localization.CurrentLanguage switch
         {
-            case LanguageMgr.SupportedLanguage.ChineseSimplified:
-                CN_S?.SetActive(true);
-                break;
-            case LanguageMgr.SupportedLanguage.ChineseTraditional:
-                CN_T?.SetActive(true);
-                break;
-            case LanguageMgr.SupportedLanguage.English:
-                EN?.SetActive(true);
-                break;
-            case LanguageMgr.SupportedLanguage.Japanese:
-                JA?.SetActive(true);
-                break;
-            case LanguageMgr.SupportedLanguage.Korean:
-                KO?.SetActive(true);
-                break;
-        }
+            LanguageMgr.SupportedLanguage.ChineseSimplified => CN_S,
+            LanguageMgr.SupportedLanguage.ChineseTraditional => CN_T,
+            LanguageMgr.SupportedLanguage.Japanese => JA,
+            LanguageMgr.SupportedLanguage.Korean => KO,
+            _ => EN
+        };
+        (target ?? EN ?? CN_S ?? CN_T ?? JA ?? KO)?.SetActive(true);
     }
 
     private void OnDestroy()
     {
-        EventCenter.Instance.RemoveEventListener("LanguageSwitch", Switch);
+        languageSubscription?.Dispose();
+        languageSubscription = null;
     }
 }

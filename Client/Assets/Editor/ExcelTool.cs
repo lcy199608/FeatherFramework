@@ -31,58 +31,57 @@ public class ExcelTool : MonoBehaviour
         EditorGUIUtility.PingObject(Selection.activeObject);
     }
 
-    private static void RunSheetTool(string command, string extraArguments = "")
+    private static Process running;
+    private static void StopRunning()
     {
-        if (!Directory.Exists(ToolDirectory))
-        {
-            Debug.LogError($"SheetTool directory was not found: {ToolDirectory}");
-            return;
-        }
+        try { if (running != null && !running.HasExited) running.Kill(); }
+        catch (Exception exception) { Debug.LogWarning(exception.Message); }
+    }
 
-        ProcessStartInfo startInfo = CreateSheetToolStartInfo(command, extraArguments);
-
-        Process process;
+    private static async void RunSheetTool(string command, string extraArguments = "")
+    {
+        if (running != null) { Debug.LogWarning("SheetTool is already running."); return; }
+        Process process = null;
+        bool cancelled = false;
         try
         {
-            process = Process.Start(startInfo);
-        }
-        catch (Exception exception)
-        {
-            Debug.LogError($"Failed to start SheetTool process.\nCommand: {startInfo.FileName} {startInfo.Arguments}\n{exception.Message}");
-            return;
-        }
-
-        if (process == null)
-        {
-            Debug.LogError("Failed to start SheetTool process.");
-            return;
-        }
-
-        using (process)
-        {
-            string stdout = process.StandardOutput.ReadToEnd();
-            string stderr = process.StandardError.ReadToEnd();
-            process.WaitForExit();
-
-            if (!string.IsNullOrWhiteSpace(stdout))
+            if (!Directory.Exists(ToolDirectory)) throw new DirectoryNotFoundException(ToolDirectory);
+            process = Process.Start(CreateSheetToolStartInfo(command, extraArguments));
+            if (process == null) throw new InvalidOperationException("Failed to start SheetTool.");
+            running = process;
+            AssemblyReloadEvents.beforeAssemblyReload += StopRunning;
+            EditorApplication.quitting += StopRunning;
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
+            var deadline = DateTime.UtcNow.AddMinutes(2);
+            while (!process.HasExited)
             {
-                Debug.Log(stdout.Trim());
+                if (DateTime.UtcNow >= deadline || EditorUtility.DisplayCancelableProgressBar("SheetTool", command + " in progress", 0.5f))
+                {
+                    cancelled = true;
+                    StopRunning();
+                    break;
+                }
+                await System.Threading.Tasks.Task.Delay(100);
             }
-
-            if (process.ExitCode != 0)
-            {
-                Debug.LogError(string.IsNullOrWhiteSpace(stderr) ? $"SheetTool exited with code {process.ExitCode}" : stderr.Trim());
-                return;
-            }
-
-            if (!string.IsNullOrWhiteSpace(stderr))
-            {
-                Debug.LogWarning(stderr.Trim());
-            }
+            string stdout = await stdoutTask;
+            string stderr = await stderrTask;
+            if (!string.IsNullOrWhiteSpace(stdout)) Debug.Log(stdout.Trim());
+            if (cancelled) { Debug.LogWarning("SheetTool cancelled or timed out. Check outputs before continuing."); return; }
+            if (process.ExitCode != 0) throw new InvalidOperationException(string.IsNullOrWhiteSpace(stderr) ? "SheetTool failed." : stderr.Trim());
+            if (!string.IsNullOrWhiteSpace(stderr)) Debug.LogWarning(stderr.Trim());
+            AssetDatabase.Refresh();
+            Debug.Log("Excel config " + command + " finished.");
         }
-
-        AssetDatabase.Refresh();
-        Debug.Log($"Excel config {command} finished.");
+        catch (Exception exception) { Debug.LogError("SheetTool: " + exception.Message); }
+        finally
+        {
+            AssemblyReloadEvents.beforeAssemblyReload -= StopRunning;
+            EditorApplication.quitting -= StopRunning;
+            EditorUtility.ClearProgressBar();
+            running = null;
+            process?.Dispose();
+        }
     }
 
     private static ProcessStartInfo CreateSheetToolStartInfo(string command, string extraArguments)
@@ -141,8 +140,27 @@ public class ExcelTool : MonoBehaviour
 
     private static string ResolveNodeExecutable()
     {
+        string configuredPath = Environment.GetEnvironmentVariable("FEATHER_NODE_PATH");
+        if (!string.IsNullOrWhiteSpace(configuredPath) && File.Exists(configuredPath))
+        {
+            return configuredPath;
+        }
+
         if (Application.platform == RuntimePlatform.WindowsEditor)
         {
+            string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            string[] windowsCandidates =
+            {
+                Path.Combine(userProfile, @".cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"nodejs\node.exe")
+            };
+            foreach (string candidatePath in windowsCandidates)
+            {
+                if (File.Exists(candidatePath))
+                {
+                    return candidatePath;
+                }
+            }
             return "node.exe";
         }
 

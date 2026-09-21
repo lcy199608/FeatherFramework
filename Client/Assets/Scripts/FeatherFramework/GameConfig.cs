@@ -6,6 +6,10 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "GameConfig", menuName = "GameConfig")]
 public class GameConfig : ScriptableObject
 {
+    [Title("可选模块（启动时生效）")]
+    public bool enableLocalization = true;
+    public bool enableRedDots = true;
+
     [Title("是否启用Debug和日志插件")]
     public bool isDebug = true;
 

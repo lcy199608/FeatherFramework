@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "rules": {
+    "gameCodeRoots": [
+      "Client/Assets/Scripts/Game",
+      "Client/Assets/Scripts/Demo"
+    ],
+    "frameworkRoot": "Client/Assets/Scripts/FeatherFramework"
+  },
+  "modules": [
+    {
+      "id": "assets",
+      "status": "core",
+      "entry": "Framework.Services.Assets",
+      "implementation": "ResMgr",
+      "purpose": "Addressables sync/async loading, in-flight request de-duplication, caching, exclusive AssetScope ownership, cancellation and release",
+      "keywords": ["asset", "resource", "addressables", "load", "prefab", "sprite", "scope", "ownership", "资源", "加载", "预制体", "作用域", "释放"]
+    },
+    {
+      "id": "events",
+      "status": "core",
+      "entry": "Framework.Services.Events",
+      "implementation": "EventCenter",
+      "purpose": "EventId-based typed in-process publish/subscribe with disposable subscriptions and listener isolation",
+      "keywords": ["event", "message", "signal", "publish", "subscribe", "事件", "消息", "通知"]
+    },
+    {
+      "id": "save",
+      "status": "core",
+      "entry": "Framework.Services.Save",
+      "implementation": "SaveDataMgr",
+      "purpose": "Compatibility-preserving game and system persistence backed by Easy Save",
+      "keywords": ["save", "load data", "persistence", "settings", "存档", "保存", "设置"]
+    },
+    {
+      "id": "config",
+      "status": "core",
+      "entry": "Framework.Services.Config",
+      "implementation": "ConfigMgr",
+      "purpose": "Generated Luban configuration tables sourced from Excel",
+      "keywords": ["config", "table", "excel", "luban", "data", "配置", "表格", "数值"]
+    },
+    {
+      "id": "timers",
+      "status": "core",
+      "entry": "Framework.Services.Timers",
+      "implementation": "TimerMgr",
+      "purpose": "Handle-owned second/frame delayed or repeated callbacks with explicit units",
+      "keywords": ["timer", "delay", "schedule", "frame", "定时器", "延迟", "循环"]
+    },
+    {
+      "id": "scenes",
+      "status": "core",
+      "entry": "Framework.Services.Scenes",
+      "implementation": "SceneMgr",
+      "purpose": "Awaitable scene transitions with duplicate-request coalescing, failure reporting and progress events",
+      "keywords": ["scene", "loading", "transition", "progress", "场景", "切换", "进度"]
+    },
+    {
+      "id": "pools",
+      "status": "core",
+      "entry": "Framework.Services.Pools",
+      "implementation": "PoolMgr",
+      "purpose": "PoolToken-identified reusable GameObject instances integrated with the asset service",
+      "keywords": ["pool", "reuse", "spawn", "despawn", "对象池", "复用", "生成"]
+    },
+    {
+      "id": "ui",
+      "status": "core",
+      "entry": "Framework.Services.UI",
+      "implementation": "UIMgr",
+      "purpose": "Root/Page navigation, owner-scoped Child panels, async loading, lifecycle, caching and cancellation",
+      "keywords": ["ui", "panel", "window", "canvas", "root", "page", "child", "owner", "navigation", "界面", "面板", "窗口", "子面板", "生命周期", "导航", "返回"]
+    },
+    {
+      "id": "audio",
+      "status": "core",
+      "entry": "Framework.Services.Audio",
+      "implementation": "AudioMgr",
+      "purpose": "AudioVoiceHandle-owned BGM/effect playback, source reuse, fades and persisted volume",
+      "keywords": ["audio", "music", "sound", "bgm", "volume", "音频", "音乐", "音效", "音量"]
+    },
+    {
+      "id": "localization",
+      "status": "optional",
+      "entry": "Framework.Services.Localization",
+      "implementation": "LanguageMgr",
+      "purpose": "Localized text, sprites and GameObject variants driven by generated tables",
+      "keywords": ["language", "localization", "i18n", "translation", "语言", "本地化", "翻译"]
+    },
+    {
+      "id": "red-dots",
+      "status": "optional",
+      "entry": "Framework.Services.RedDots",
+      "implementation": "RedDotSystem",
+      "purpose": "Hierarchical notification badge state and propagation",
+      "keywords": ["red dot", "badge", "notification", "红点", "角标", "提醒"]
+    }
+  ]
+}

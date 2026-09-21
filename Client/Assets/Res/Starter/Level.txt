@@ -1,0 +1,1 @@
+Starter level: collect coins, return to menu, then continue your saved progress.

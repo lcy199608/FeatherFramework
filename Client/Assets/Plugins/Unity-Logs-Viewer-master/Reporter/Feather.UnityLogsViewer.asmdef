@@ -1,0 +1,5 @@
+{
+  "name": "Feather.UnityLogsViewer",
+  "rootNamespace": "Feather.Diagnostics",
+  "autoReferenced": true
+}

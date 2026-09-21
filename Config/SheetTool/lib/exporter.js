@@ -1,12 +1,74 @@
 const fs = require("fs");
 const path = require("path");
 
+
+// Render both outputs before touching the live directories. Roll back both on commit failure.
 function exportArtifacts(config, workbook, format) {
+  require('./identifiers').validateNames(config, workbook);
+  if (!['json','bin'].includes(format)) throw new Error('Unsupported export format');
+  const outputs = [path.resolve(config.outputCodeDir), path.resolve(config.outputDataDir)];
+  for (const output of outputs) {
+    if (output === path.parse(output).root) throw new Error('Refusing a filesystem root output');
+    if (config.excelDir && (path.resolve(config.excelDir) === output || path.resolve(config.excelDir).startsWith(output + path.sep))) throw new Error('Output contains Excel sources');
+  }
+  if (outputs[0] === outputs[1] || outputs.some((p,i)=>p.startsWith(outputs[1-i] + path.sep))) throw new Error('Output directories overlap');
+  const jobs = [];
+  let committed = false;
+  try {
+    for (const [index, output] of outputs.entries()) {
+      fs.mkdirSync(path.dirname(output), {recursive:true});
+      const staging=fs.mkdtempSync(path.join(path.dirname(output), '.feather-stage-'));
+      const backup=staging + '-backup';
+      const existed=fs.existsSync(output);
+      jobs.push({output,staging,backup,existed,moved:false,installed:false,index});
+      if (existed) fs.cpSync(output,staging,{recursive:true});
+      for (const name of fs.readdirSync(staging)) {
+        const extension=path.extname(name);
+        if ((index===0 && extension==='.cs') || (index===1 && ['.json','.bytes'].includes(extension))) fs.unlinkSync(path.join(staging,name));
+      }
+    }
+    renderArtifacts({...config, outputCodeDir:jobs[0].staging,outputDataDir:jobs[1].staging}, workbook, format);
+    for (const table of workbook.tables) {
+      const extension = format === 'bin' ? '.bytes' : '.json';
+      const oldExtension = format === 'bin' ? '.json' : '.bytes';
+      const target = path.join(jobs[1].staging, table.name + extension + '.meta');
+      const previous = path.join(jobs[1].staging, table.name + oldExtension + '.meta');
+      if (!fs.existsSync(target) && fs.existsSync(previous)) fs.renameSync(previous, target);
+    }
+    for (const job of jobs) {
+      for (const name of fs.readdirSync(job.staging)) {
+        if (!name.endsWith('.meta')) continue;
+        const asset=name.slice(0,-5);
+        if (['.cs','.json','.bytes'].includes(path.extname(asset)) && !fs.existsSync(path.join(job.staging,asset))) fs.unlinkSync(path.join(job.staging,name));
+      }
+    }
+    for (const job of jobs) {
+      if (job.existed) { fs.renameSync(job.output,job.backup); job.moved=true; }
+      fs.renameSync(job.staging,job.output); job.installed=true;
+    }
+    committed=true;
+  } catch(error) {
+    for (const job of [...jobs].reverse()) {
+      if (job.installed) fs.renameSync(job.output,job.staging);
+      if (job.moved) fs.renameSync(job.backup,job.output);
+    }
+    throw error;
+  } finally {
+    for (const job of jobs) {
+      // Only delete unique sibling temporary directories created by this transaction.
+      for (const temporary of [job.staging, ...(committed ? [job.backup] : [])]) {
+        if (path.dirname(temporary)!==path.dirname(job.output) || !path.basename(temporary).startsWith('.feather-stage-')) throw new Error('Unexpected temporary path');
+        if (fs.existsSync(temporary)) fs.rmSync(temporary,{recursive:true,force:true});
+      }
+    }
+  }
+}
+
+function renderArtifacts(config, workbook, format) {
   fs.mkdirSync(config.outputCodeDir, { recursive: true });
   fs.mkdirSync(config.outputDataDir, { recursive: true });
 
-  cleanDirectory(config.outputCodeDir, [".meta"]);
-  cleanDirectory(config.outputDataDir, [".meta"]);
+
 
   for (const enumEntry of workbook.enums) {
     writeFile(path.join(config.outputCodeDir, `${enumEntry.name}.cs`), generateEnumCode(config.namespace, enumEntry));
@@ -78,7 +140,7 @@ function generateRowCode(namespaceName, table) {
       lines.push(`        /// ${escapeXml(field.comment)}`);
       lines.push("        /// </summary>");
     }
-    lines.push(`        [JsonProperty("${field.originalName}")]`);
+    lines.push(`        [JsonProperty(${JSON.stringify(field.originalName)})]`);
     lines.push(`        public ${toCSharpType(field.type)} ${field.propertyName} { get; set; }`);
     lines.push("");
   }
@@ -164,16 +226,16 @@ function generateTablesCode(namespaceName, tables) {
     lines.push(`        public ${table.name} ${table.name} { get; }`);
   }
   lines.push("");
-  lines.push("        private Tables()");
+  lines.push("        private Tables(System.Func<string, bool> shouldLoad)");
   lines.push("        {");
   for (const table of tables) {
-    lines.push(`            ${table.name} = new ${table.name}(LoadRows("${table.name}", ${table.rowName}.ReadFrom));`);
+    lines.push(`            ${table.name} = new ${table.name}(shouldLoad == null || shouldLoad("${table.name}") ? LoadRows("${table.name}", ${table.rowName}.ReadFrom) : new List<${table.rowName}>());`);
   }
   lines.push("        }");
   lines.push("");
-  lines.push("        public static Tables Load()");
+  lines.push("        public static Tables Load(System.Func<string, bool> shouldLoad = null)");
   lines.push("        {");
-  lines.push("            return new Tables();");
+  lines.push("            return new Tables(shouldLoad);");
   lines.push("        }");
   lines.push("");
   lines.push("        private static readonly byte[] BinaryMagic = { 0x46, 0x43, 0x46, 0x47 };");
@@ -211,25 +273,35 @@ function generateTablesCode(namespaceName, tables) {
   lines.push("            using var reader = new BinaryReader(stream);");
   lines.push("");
   lines.push("            reader.ReadBytes(BinaryMagic.Length);");
-  lines.push("            int count = reader.ReadInt32();");
+  lines.push("            int marker = reader.ReadInt32();");
+  lines.push("            if (marker < 0 && marker != -1) throw new InvalidDataException(\"Unsupported config binary version.\");");
+  lines.push("            if (marker >= 0) stream.Position -= 4; // Legacy format: first value was the row count.");
+  lines.push("            int count = ReadCount(reader);");
   lines.push("            var rows = new List<T>(count);");
   lines.push("            for (int i = 0; i < count; i++)");
   lines.push("            {");
   lines.push("                rows.Add(readBinaryRow(reader));");
   lines.push("            }");
+  lines.push("            if (stream.Position != stream.Length) throw new InvalidDataException(\"Unexpected trailing config data.\");");
   lines.push("            return rows;");
   lines.push("        }");
   lines.push("");
+  lines.push("        private static int ReadCount(BinaryReader reader)");
+  lines.push("        {");
+  lines.push("            int count = reader.ReadInt32();");
+  lines.push("            if (count < 0 || count > 1000000 || count > reader.BaseStream.Length - reader.BaseStream.Position) throw new InvalidDataException(\"Invalid config length.\");");
+  lines.push("            return count;");
+  lines.push("        }");
   lines.push("        public static string ReadString(BinaryReader reader)");
   lines.push("        {");
-  lines.push("            int byteCount = reader.ReadInt32();");
+  lines.push("            int byteCount = ReadCount(reader);");
   lines.push("            byte[] bytes = reader.ReadBytes(byteCount);");
-  lines.push("            return System.Text.Encoding.UTF8.GetString(bytes);");
+  lines.push("            return new System.Text.UTF8Encoding(false, true).GetString(bytes);");
   lines.push("        }");
   lines.push("");
   lines.push("        public static List<T> ReadArray<T>(BinaryReader reader, System.Func<BinaryReader, T> readItem)");
   lines.push("        {");
-  lines.push("            int count = reader.ReadInt32();");
+  lines.push("            int count = ReadCount(reader);");
   lines.push("            var items = new List<T>(count);");
   lines.push("            for (int i = 0; i < count; i++)");
   lines.push("            {");
@@ -257,6 +329,7 @@ function buildBinaryTable(table) {
   const chunks = [];
   const magic = Buffer.from([0x46, 0x43, 0x46, 0x47]);
   chunks.push(magic);
+  const version = Buffer.alloc(4); version.writeInt32LE(-1); chunks.push(version);
   const count = Buffer.allocUnsafe(4);
   count.writeInt32LE(table.rows.length, 0);
   chunks.push(count);
@@ -412,5 +485,6 @@ function writeFile(filePath, content) {
 }
 
 module.exports = {
-  exportArtifacts
+  exportArtifacts,
+  cleanDirectory
 };

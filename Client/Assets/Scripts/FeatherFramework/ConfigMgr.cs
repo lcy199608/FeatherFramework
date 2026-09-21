@@ -1,14 +1,16 @@
 ﻿using cfg;
 using UnityEngine;
 
-public class ConfigMgr : Singleton<ConfigMgr>
+public sealed class ConfigMgr
 {
-    public static Tables Config => config;
-    private static Tables config;
+    public Tables Tables { get; private set; }
 
-    public void InitConfig()
+    internal ConfigMgr() { }
+
+    internal void InitConfig(bool enableLocalization = true, bool enableRedDots = true)
     {
-        config = Tables.Load();
+        Tables = cfg.Tables.Load(name => (name != "Language" || enableLocalization) &&
+                                        (name != "RedDot" || enableRedDots));
         Debug.Log("Load Config Success");
     }
 }

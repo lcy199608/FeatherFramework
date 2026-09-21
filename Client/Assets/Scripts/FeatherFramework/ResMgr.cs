@@ -1,136 +1,321 @@
-﻿using System.Collections;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Events;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using System;
 
-public class ResMgr : Singleton<ResMgr>
+public sealed class ResMgr
 {
-    //缓存资源
-    Dictionary<string, AsyncOperationHandle?> resCache = new Dictionary<string, AsyncOperationHandle?>();
-    List<string> isLoadRes = new List<string>(); //正在加载的资源(防止重复缓存)
-    Dictionary<string, List<UnityAction<UnityEngine.Object>>> loadCallbacks = new Dictionary<string, List<UnityAction<UnityEngine.Object>>>(); //加载完回调
-
-    //同步加载资源
-    public T Load<T>(string path) where T : UnityEngine.Object
+    private readonly struct AssetKey : IEquatable<AssetKey>
     {
-        var cacheHandle = TryGetResByCache(path);
-        if (cacheHandle != null)
+        public readonly string Address;
+        public readonly Type Type;
+
+        public AssetKey(string address, Type type)
         {
-            return (T)cacheHandle.Value.Result;
+            Address = address;
+            Type = type;
         }
-        AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(path);
-        T res = handle.WaitForCompletion();
-        if (handle.IsDone && handle.Status == AsyncOperationStatus.Succeeded)
-        {
-            resCache.Add(path, handle);
-            return res;
-        }
-        Debug.LogError("Load asset failed: " + path);
-        return null;
+
+        public bool Equals(AssetKey other) => Address == other.Address && Type == other.Type;
+        public override bool Equals(object obj) => obj is AssetKey other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(Address, Type);
     }
 
-    //异步加载资源
-    public void LoadAsync<T>(string path,UnityAction<T> callback) where T : UnityEngine.Object
+    private sealed class LoadRequest
     {
-        var cacheHandle = TryGetResByCache(path);
-        if (cacheHandle != null)
+        public AsyncOperationHandle Handle;
+        public readonly List<Action<UnityEngine.Object>> Callbacks = new List<Action<UnityEngine.Object>>();
+        public bool Completed;
+        public bool Cancelled;
+    }
+
+    private readonly MonoBehaviour coroutineRunner;
+    private readonly Dictionary<AssetKey, AsyncOperationHandle> cache = new Dictionary<AssetKey, AsyncOperationHandle>();
+    private readonly Dictionary<AssetKey, LoadRequest> activeRequests = new Dictionary<AssetKey, LoadRequest>();
+    private readonly Dictionary<AssetKey, AssetScope> owners = new Dictionary<AssetKey, AssetScope>();
+
+    // An opt-in exclusive lifetime for level-local assets. Shared framework assets use the normal cache.
+    private bool stopped;
+    private void EnsureOpen() { if (stopped) throw new ObjectDisposedException(nameof(ResMgr)); }
+    public AssetScope CreateScope() { EnsureOpen(); return new AssetScope(this); }
+    internal void Shutdown() { if (stopped) return; stopped = true; ReleaseAll(); }
+
+    public sealed class AssetScope : IDisposable
+    {
+        private readonly ResMgr assets;
+        private readonly Dictionary<AssetKey, Action> releases = new Dictionary<AssetKey, Action>();
+        private bool disposed;
+        internal AssetScope(ResMgr assets) { this.assets = assets; }
+
+        public void LoadAsync<T>(string address, UnityAction<T> callback) where T : UnityEngine.Object
         {
-            T res = (T)cacheHandle.Value.Result;
-            callback?.Invoke(res);
+            if (disposed) throw new ObjectDisposedException(nameof(AssetScope));
+            assets.EnsureOpen();
+            ValidateAddress(address);
+            var key = new AssetKey(address, typeof(T));
+            if (!releases.ContainsKey(key))
+            {
+                if (assets.owners.ContainsKey(key) || assets.cache.ContainsKey(key) || assets.activeRequests.ContainsKey(key))
+                    throw new InvalidOperationException($"Asset '{address}' already has another owner; use its existing owner for sharing.");
+                assets.owners.Add(key, this);
+                releases.Add(key, () => assets.ReleaseRes<T>(address));
+            }
+            assets.LoadAsyncCore<T>(address, value => { if (!disposed) callback?.Invoke(value); }, this);
+        }
+
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+            foreach (var pair in releases)
+            {
+                assets.owners.Remove(pair.Key);
+                pair.Value();
+            }
+            releases.Clear();
+        }
+    }
+
+    private void CheckOwner(AssetKey key, AssetScope scope = null)
+    {
+        if (owners.TryGetValue(key, out var owner) && owner != scope)
+            throw new InvalidOperationException($"Asset '{key.Address}' belongs to an AssetScope; access and release it through that owner.");
+    }
+
+    internal ResMgr(MonoBehaviour coroutineRunner)
+    {
+        this.coroutineRunner = coroutineRunner ?? throw new ArgumentNullException(nameof(coroutineRunner));
+    }
+
+    public T Load<T>(string address) where T : UnityEngine.Object
+    {
+        EnsureOpen();
+        ValidateAddress(address);
+        var key = new AssetKey(address, typeof(T));
+        CheckOwner(key);
+        if (cache.TryGetValue(key, out var cached))
+        {
+            return cached.Result as T;
+        }
+
+        if (activeRequests.TryGetValue(key, out var activeRequest))
+        {
+            activeRequest.Handle.WaitForCompletion();
+            T result = activeRequest.Handle.Status == AsyncOperationStatus.Succeeded
+                ? activeRequest.Handle.Result as T
+                : null;
+            CompleteRequest(address, key, activeRequest);
+            return result;
+        }
+
+        var request = new LoadRequest
+        {
+            Handle = Addressables.LoadAssetAsync<T>(address)
+        };
+        activeRequests.Add(key, request);
+        request.Handle.WaitForCompletion();
+        T loadedAsset = request.Handle.Status == AsyncOperationStatus.Succeeded
+            ? request.Handle.Result as T
+            : null;
+        CompleteRequest(address, key, request);
+        return loadedAsset;
+    }
+
+    public void LoadAsync<T>(string address, UnityAction<T> callback) where T : UnityEngine.Object
+        => LoadAsyncCore(address, callback, null);
+
+    private void LoadAsyncCore<T>(string address, UnityAction<T> callback, AssetScope scope) where T : UnityEngine.Object
+    {
+        EnsureOpen();
+        ValidateAddress(address);
+        var key = new AssetKey(address, typeof(T));
+        CheckOwner(key, scope);
+        if (cache.TryGetValue(key, out var cached))
+        {
+            try
+            {
+                callback?.Invoke(cached.Result as T);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+            }
             return;
         }
-        if (!isLoadRes.Contains(path))
+
+        if (!activeRequests.TryGetValue(key, out var request))
         {
-            isLoadRes.Add(path);
-            MonoMgr.Instance.StartCoroutine(ReallyLoadAsync<T>(path, callback));
+            request = new LoadRequest
+            {
+                Handle = Addressables.LoadAssetAsync<T>(address)
+            };
+            request.Callbacks.Add(result => callback?.Invoke(result as T));
+            activeRequests.Add(key, request);
+            coroutineRunner.StartCoroutine(LoadAndNotify<T>(address, key, request));
+            return;
         }
-        else
+
+        request.Callbacks.Add(result => callback?.Invoke(result as T));
+    }
+
+    public void ReleaseRes<T>(string address) where T : UnityEngine.Object
+    {
+        var key = new AssetKey(address, typeof(T));
+        CheckOwner(key);
+        CancelRequest(key);
+        if (cache.TryGetValue(key, out var handle))
         {
-            UnityAction<UnityEngine.Object> action = (result) => callback((T)result);
-            if (loadCallbacks.ContainsKey(path))
-            {
-                var tempListAction = loadCallbacks[path];
-                tempListAction.Add(action);
-                loadCallbacks[path] = tempListAction;
-            }
-            else
-            {
-                loadCallbacks.Add(path, new List<UnityAction<UnityEngine.Object>>() { action });
-            }
+            Addressables.Release(handle);
+            cache.Remove(key);
         }
     }
 
-    private IEnumerator ReallyLoadAsync<T>(string path, UnityAction<T> callback) where T : UnityEngine.Object
+    // Compatibility overload. Prefer ReleaseRes<T> so ownership includes the loaded type.
+    internal void ReleaseRes(string address, bool immediately = false)
     {
-        AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(path);
-        yield return handle;
-        if (handle.IsDone && handle.Status == AsyncOperationStatus.Succeeded)
+        var keys = new List<AssetKey>();
+        foreach (var pair in cache)
         {
-            resCache.Add(path, handle);
-            callback?.Invoke(handle.Result);
-            if (loadCallbacks.ContainsKey(path))
+            if (pair.Key.Address == address)
             {
-                var tempListAction = loadCallbacks[path];
-                foreach (var action in tempListAction)
-                {
-                    action(handle.Result);
-                }
-                loadCallbacks.Remove(path);
+                Addressables.Release(pair.Value);
+                keys.Add(pair.Key);
             }
         }
-        else
+        foreach (var key in keys)
         {
-            Debug.LogError("Load asset failed: " + path);
+            cache.Remove(key);
         }
-        isLoadRes.Remove(path);
-    }
 
-    //获取缓存
-    AsyncOperationHandle? TryGetResByCache(string path)
-    {
-        if (resCache.ContainsKey(path))
+        keys.Clear();
+        foreach (var pair in activeRequests)
         {
-            return resCache[path];
-        }
-        else
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// 释放指定资源
-    /// </summary>
-    /// <param name="path">资源路径</param>
-    /// <param name="immediately">是否立即释放缓存（不推荐）</param>
-    public void ReleaseRes(string path,bool immediately = false)
-    {
-        var cacheHandle = TryGetResByCache(path);
-        if(cacheHandle != null)
-        {
-            Addressables.Release(cacheHandle.Value);
-            resCache.Remove(path);
-            if (immediately)
+            if (pair.Key.Address == address)
             {
-                Resources.UnloadUnusedAssets();
+                keys.Add(pair.Key);
             }
         }
-        else
+        foreach (var key in keys)
         {
-            Debug.LogError("Dont Exist This Resource");
+            CancelRequest(key);
+        }
+
+        if (immediately)
+        {
+            Resources.UnloadUnusedAssets();
         }
     }
 
-    /// <summary>
-    /// 释放没有被使用的资源
-    /// </summary>
-    public void ReleaseUnusedResources()
+    internal void ReleaseAll()
     {
-        //AssetBundle.UnloadAllAssetBundles(true);
+        foreach (var owner in new HashSet<AssetScope>(owners.Values)) owner.Dispose();
+        foreach (var handle in cache.Values)
+        {
+            Addressables.Release(handle);
+        }
+        cache.Clear();
+
+        foreach (var request in activeRequests.Values)
+        {
+            request.Cancelled = true;
+            request.Callbacks.Clear();
+            if (request.Handle.IsValid())
+            {
+                Addressables.Release(request.Handle);
+            }
+        }
+        activeRequests.Clear();
+    }
+
+    internal void ReleaseUnusedResources()
+    {
         Resources.UnloadUnusedAssets();
-        GC.Collect();
+    }
+
+    private IEnumerator LoadAndNotify<T>(string address, AssetKey key, LoadRequest request)
+        where T : UnityEngine.Object
+    {
+        yield return request.Handle;
+        CompleteRequest(address, key, request);
+    }
+
+    private void CompleteRequest(string address, AssetKey key, LoadRequest request)
+    {
+        if (request.Completed)
+        {
+            return;
+        }
+
+        request.Completed = true;
+        if (activeRequests.TryGetValue(key, out var active) && ReferenceEquals(active, request))
+        {
+            activeRequests.Remove(key);
+        }
+
+        if (!request.Handle.IsValid())
+        {
+            return;
+        }
+
+        bool succeeded = request.Handle.Status == AsyncOperationStatus.Succeeded;
+        if (succeeded && !request.Cancelled)
+        {
+            cache[key] = request.Handle;
+        }
+        else
+        {
+            if (!succeeded)
+            {
+                Debug.LogError($"Failed to load asset '{address}'.");
+            }
+            Addressables.Release(request.Handle);
+        }
+
+        if (request.Cancelled)
+        {
+            request.Callbacks.Clear();
+            return;
+        }
+
+        var callbacks = request.Callbacks.ToArray();
+        request.Callbacks.Clear();
+        UnityEngine.Object result = succeeded ? request.Handle.Result as UnityEngine.Object : null;
+        foreach (var callback in callbacks)
+        {
+            try
+            {
+                callback?.Invoke(result);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+            }
+        }
+    }
+
+    private static void ValidateAddress(string address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            throw new ArgumentException("Asset address cannot be empty.", nameof(address));
+        }
+    }
+
+    private void CancelRequest(AssetKey key)
+    {
+        if (!activeRequests.TryGetValue(key, out var request))
+        {
+            return;
+        }
+        activeRequests.Remove(key);
+        request.Cancelled = true;
+        request.Callbacks.Clear();
+        if (request.Handle.IsValid())
+        {
+            Addressables.Release(request.Handle);
+        }
     }
 }

@@ -1,3 +1,4 @@
+const { validateNames } = require("./identifiers");
 function buildWorkbook(config, rawSheets) {
   const enums = parseEnums(rawSheets.__enums__ || []);
   const enumMap = new Map(enums.map((entry) => [entry.name, entry]));
@@ -6,6 +7,7 @@ function buildWorkbook(config, rawSheets) {
   );
 
   validateAndResolveRefs(tables);
+  validateNames({ namespace: config.namespace || "cfg" }, { enums, tables });
 
   return {
     enums,
@@ -375,7 +377,7 @@ function toPascalCase(value) {
 
 function parseInteger(value, context) {
   const number = Number(value);
-  if (!Number.isInteger(number)) {
+  if (!Number.isInteger(number) || number < -2147483648 || number > 2147483647) {
     throw new Error(`${context}: "${value}"`);
   }
   return number;
@@ -383,7 +385,7 @@ function parseInteger(value, context) {
 
 function parseFloatNumber(value, context) {
   const number = Number(value);
-  if (!Number.isFinite(number)) {
+  if (!Number.isFinite(number) || !Number.isFinite(Math.fround(number))) {
     throw new Error(`${context}: "${value}"`);
   }
   return number;

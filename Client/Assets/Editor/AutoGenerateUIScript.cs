@@ -1,234 +1,212 @@
-﻿using UnityEngine;
-using UnityEditor;
-using System.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
+using System.Linq;
 using System.Text;
-using System;
-using System.ComponentModel;
+using System.Text.RegularExpressions;
+using UnityEditor;
+using UnityEngine;
 using UnityEngine.UI;
 
-public class AutoGenerateTemplate
+public static class AutoGenerateUIScript
 {
-    public static string UIClass =
- @"using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
-using System;
-using System.Collections.Generic;
-using DG.Tweening;
-public class #类名# : PanelBase
-{
-    public override bool IsStackable => false;
-    public override bool IsRoot => false;
-    
-    public override void OnShow()
+    private const string OutputDirectory = "Assets/Scripts/Game/UI";
+
+    private static readonly IReadOnlyDictionary<string, Type> BindingTypes = new Dictionary<string, Type>
     {
-        
-    }
-
-    public override void OnHide()
-    {
-        gameObject.SetActive(false);
-    }
-
-//auto
-    #成员#
-    public override void OnInit()
-    {
-        base.OnInit();
-        #查找#
-    }
-}
-";
-}
-
-
-public class AutoGenerateUIScript
-{
+        { "Img", typeof(Image) },
+        { "Btn", typeof(Button) },
+        { "Txt", typeof(Text) },
+        { "Tran", typeof(Transform) }
+    };
 
     [MenuItem("FeatherFramework/生成或刷新UI脚本 %g")]
     public static void BuildUIScript()
     {
-        bool temp = EditorUtility.DisplayDialog("提示", "确定生成或刷新UI脚本吗？", "确定", "取消");
-        if (!temp)
-            return;
-
-        var dicUIType = new Dictionary<string, string>();
-
-        dicUIType.Add("Img", "Image");
-        dicUIType.Add("Btn", "Button");
-        dicUIType.Add("Txt", "Text");
-        dicUIType.Add("Tran", "Transform");
-
-        //获取选中的prefab
-        GameObject[] selectobjs = Selection.gameObjects;
-
-        foreach (GameObject go in selectobjs)
+        if (!EditorUtility.DisplayDialog("提示", "确定生成或刷新UI绑定脚本吗？", "确定", "取消"))
         {
-            //选择的物体
-            GameObject selectobj = go.transform.root.gameObject;
-
-            //物体的子物体
-            Transform[] _transforms = selectobj.GetComponentsInChildren<Transform>(true);
-
-            //转换为list
-            List<Transform> childList = new List<Transform>(_transforms);
-
-            //UI需要查询的物体，根据规则筛选
-            var mainNode = from trans in childList where dicUIType.Keys.ToList().Any(_ => trans.name.Contains(_)) select trans;
-
-            //存储每个目标路径
-            var nodePathList = new Dictionary<string, string>();
-
-            //循环得到物体路径
-            foreach (Transform node in mainNode)
-            {
-                Transform tempNode = node;
-                string nodePath = "/" + tempNode.name;
-
-                //遍历到顶，求得路径
-                while (tempNode != tempNode.root)
-                {
-                    //取得上级
-                    tempNode = tempNode.parent;
-
-                    if (tempNode == tempNode.root)
-                        continue;
-
-                    //求出/在哪
-                    int index = nodePath.IndexOf('/');
-
-                    //把得到的路径插入
-                    nodePath = nodePath.Insert(index, "/" + tempNode.name);
-                }
-
-                nodePath = nodePath.Remove(0, 1);// 去掉/
-                //将最终路径存入
-                nodePathList.Add(node.name, nodePath);
-            }
-
-            //成员变量字符串
-            string memberstring = "";
-            //查询代码字符串
-            string loadedcontant = "";
-
-            foreach (Transform itemtran in mainNode)
-            {
-                //识别变量类型
-                string keyStr = dicUIType.Keys.First(_ => itemtran.name.Contains(_));
-                string typeStr = dicUIType[keyStr];
-
-                var name = itemtran.name.Replace(keyStr, keyStr.ToLower());
-
-                //变量声明
-                memberstring += "private " + typeStr + " " + name + " = null;\r\n\t";
-
-                //查找语句
-                loadedcontant += name + " = " + "transform.Find(\"" + nodePathList[itemtran.name] + "\").GetComponent<" + typeStr + ">();\r\n\t\t";
-
-                #region 自动添加组件
-                //把忘记添加组件的自动加上
-                switch (typeStr)
-                {
-                    case "Image":
-                        if (itemtran.GetComponent<Image>() == null)
-                        {
-                            itemtran.gameObject.AddComponent<Image>();
-                            EditorUtility.SetDirty(itemtran.gameObject);
-                            AssetDatabase.SaveAssets();
-                            AssetDatabase.Refresh();
-                        }
-                        break;
-
-                    case "Button":
-                        if (itemtran.GetComponent<Button>() == null)
-                        {
-                            itemtran.gameObject.AddComponent<Button>();
-                            EditorUtility.SetDirty(itemtran.gameObject);
-                            AssetDatabase.SaveAssets();
-                            AssetDatabase.Refresh();
-                        }
-                        break;
-
-                    case "Text":
-                        if (itemtran.GetComponent<Text>() == null)
-                        {
-                            itemtran.gameObject.AddComponent<Text>();
-                            EditorUtility.SetDirty(itemtran.gameObject);
-                            AssetDatabase.SaveAssets();
-                            AssetDatabase.Refresh();
-                        }
-                        break;
-
-                    case "Transform":
-                        if (itemtran.GetComponent<Transform>() == null)
-                        {
-                            itemtran.gameObject.AddComponent<Transform>();
-                            EditorUtility.SetDirty(itemtran.gameObject);
-                            AssetDatabase.SaveAssets();
-                            AssetDatabase.Refresh();
-                        }
-                        break;
-
-                    default:
-                        break;
-                }
-                #endregion
-
-            }
-
-            //创建脚本的路径
-            string scriptPath = Application.dataPath + "/Scripts/Game/UI/" + selectobj.name + ".cs";
-
-
-            string classStr = "";
-
-            //如果已经存在了脚本，则只替换//auto下方的字符串
-            //方便刷新
-            if (File.Exists(scriptPath))
-            {
-                FileStream classfile = new FileStream(scriptPath, FileMode.Open);
-                StreamReader read = new StreamReader(classfile);
-                classStr = read.ReadToEnd();
-                read.Close();
-                classfile.Close();
-                File.Delete(scriptPath);
-
-                //分割的位置
-                string splitStr = "//auto";
-                //auto 上面的部分
-                string unchangeStr = Regex.Split(classStr, splitStr, RegexOptions.IgnoreCase)[0];
-                //auto 下面的部分
-                string changeStr = Regex.Split(AutoGenerateTemplate.UIClass, splitStr, RegexOptions.IgnoreCase)[1];
-
-                StringBuilder build = new StringBuilder();
-                build.Append(unchangeStr);
-                build.Append(splitStr);
-                build.Append(changeStr);
-                classStr = build.ToString();
-            }
-            else
-            {
-                classStr = AutoGenerateTemplate.UIClass;
-            }
-
-            classStr = classStr.Replace("#类名#", selectobj.name);
-            classStr = classStr.Replace("#查找#", loadedcontant);
-            classStr = classStr.Replace("#成员#", memberstring);
-
-            FileStream file = new FileStream(scriptPath, FileMode.CreateNew);
-            StreamWriter fileW = new StreamWriter(file, System.Text.Encoding.UTF8);
-            fileW.Write(classStr);
-            fileW.Flush();
-            fileW.Close();
-            file.Close();
-
-            Debug.Log("创建脚本 " + Application.dataPath + "/Scripts/Game/UI/" + selectobj.name + ".cs 成功!");
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            return;
         }
+
+        Directory.CreateDirectory(Path.Combine(Application.dataPath, "Scripts/Game/UI"));
+        var selected = Selection.gameObjects;
+        if (selected.Select(value => SanitizeIdentifier(value.name)).Distinct().Count() != selected.Length)
+            throw new InvalidOperationException("Selected panels produce conflicting class names.");
+        foreach (GameObject selectedObject in selected)
+        {
+            GenerateFor(selectedObject);
+        }
+        AssetDatabase.Refresh();
     }
 
+    private static void GenerateFor(GameObject root)
+    {
+        string className = SanitizeIdentifier(root.name);
+        List<Binding> bindings = CollectBindings(root.transform);
+        if (bindings == null)
+        {
+            return;
+        }
+
+        string businessPath = $"{OutputDirectory}/{className}.cs";
+        string generatedPath = $"{OutputDirectory}/{className}.Bindings.g.cs";
+        string sourcePath = AssetDatabase.GetAssetPath(root);
+        string guid = string.IsNullOrEmpty(sourcePath) ? "" : AssetDatabase.AssetPathToGUID(sourcePath);
+        string marker = "// Source asset GUID: " + guid;
+        if (File.Exists(generatedPath) && guid.Length > 0)
+        {
+            var previous = Regex.Match(File.ReadAllText(generatedPath), @"// Source asset GUID: (\w+)");
+            if (previous.Success && previous.Groups[1].Value != guid)
+                throw new InvalidOperationException($"{className} is already generated for another prefab.");
+        }
+        if (TypeCache.GetTypesDerivedFrom<PanelBase>().Any(type => type.Name == className && type.FullName != className))
+            throw new InvalidOperationException($"Panel class name conflicts with an existing namespaced type: {className}");
+        if (!File.Exists(businessPath))
+        {
+            File.WriteAllText(businessPath, CreateBusinessScript(className), new UTF8Encoding(false));
+        }
+        File.WriteAllText(generatedPath, CreateBindingScript(className, bindings) + marker + "\n", new UTF8Encoding(false));
+        Debug.Log($"Generated UI bindings: {generatedPath}", root);
+    }
+
+    private static List<Binding> CollectBindings(Transform root)
+    {
+        var result = new List<Binding>();
+        var usedNames = new HashSet<string>(StringComparer.Ordinal);
+        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+        {
+            if (child.name.Contains("/")) throw new InvalidOperationException("UI node names cannot contain '/'.");
+            var siblingNames = new HashSet<string>(StringComparer.Ordinal);
+            foreach (Transform sibling in child)
+                if (!siblingNames.Add(sibling.name)) throw new InvalidOperationException($"Duplicate child name under {child.name}: {sibling.name}");
+            if (child == root)
+            {
+                continue;
+            }
+
+            var match = BindingTypes.FirstOrDefault(pair => child.name.StartsWith(pair.Key, StringComparison.Ordinal));
+            if (string.IsNullOrEmpty(match.Key))
+            {
+                continue;
+            }
+            if (child.GetComponent(match.Value) == null)
+            {
+                Debug.LogError($"UI binding {GetPath(root, child)} requires component {match.Value.Name}.", child);
+                return null;
+            }
+
+            result.Add(new Binding(CreateUniqueMemberName(child.name, usedNames), match.Value.Name, GetPath(root, child)));
+        }
+        return result;
+    }
+
+    private static string CreateBusinessScript(string className)
+    {
+        return $@"using UnityEngine;
+
+public partial class {className} : PanelBase
+{{
+    public override UIType Type => UIType.Page;
+
+    public override void OnInit()
+    {{
+        BindGeneratedReferences();
+    }}
+
+    public override void OnShow()
+    {{
+    }}
+
+    public override void OnHide()
+    {{
+    }}
+
+    public override void OnClose()
+    {{
+        // 释放本次打开持有的订阅、计时器等；OnInit 中建立的实例资源在 OnDispose 清理。
+    }}
+}}
+";
+    }
+
+    private static string CreateBindingScript(string className, IEnumerable<Binding> bindings)
+    {
+        var members = new StringBuilder();
+        var assignments = new StringBuilder();
+        foreach (Binding binding in bindings)
+        {
+            members.AppendLine($"    private {binding.TypeName} {binding.MemberName};");
+            string escaped = binding.Path.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "\\r").Replace("\n", "\\n").Replace("\t", "\\t");
+            assignments.AppendLine($"        {binding.MemberName} = transform.Find(\"{escaped}\").GetComponent<{binding.TypeName}>();");
+        }
+
+        return $@"// <auto-generated />
+using UnityEngine;
+using UnityEngine.UI;
+
+public partial class {className}
+{{
+{members}    private void BindGeneratedReferences()
+    {{
+{assignments}    }}
+}}
+";
+    }
+
+    private static string GetPath(Transform root, Transform child)
+    {
+        var parts = new Stack<string>();
+        Transform current = child;
+        while (current != null && current != root)
+        {
+            parts.Push(current.name);
+            current = current.parent;
+        }
+        return string.Join("/", parts);
+    }
+
+    private static string CreateUniqueMemberName(string objectName, ISet<string> usedNames)
+    {
+        string baseName = "_" + SanitizeIdentifier(objectName);
+        string name = baseName;
+        int suffix = 2;
+        while (!usedNames.Add(name))
+        {
+            name = baseName + suffix;
+            suffix++;
+        }
+        return name;
+    }
+
+    private static string SanitizeIdentifier(string value)
+    {
+        using (var provider = new Microsoft.CSharp.CSharpCodeProvider())
+            if (provider.IsValidIdentifier(value)) return value;
+        string identifier = Regex.Replace(value ?? string.Empty, "[^a-zA-Z0-9_]", "_");
+        if (string.IsNullOrEmpty(identifier))
+        {
+            throw new InvalidOperationException("A UI object name cannot be converted to a C# identifier.");
+        }
+        if (char.IsDigit(identifier[0]))
+        {
+            identifier = "_" + identifier;
+        }
+        using (var provider = new Microsoft.CSharp.CSharpCodeProvider())
+            if (!provider.IsValidIdentifier(identifier)) identifier = "_" + identifier;
+        return identifier;
+    }
+
+    private sealed class Binding
+    {
+        public string MemberName { get; }
+        public string TypeName { get; }
+        public string Path { get; }
+
+        public Binding(string memberName, string typeName, string path)
+        {
+            MemberName = memberName;
+            TypeName = typeName;
+            Path = path;
+        }
+    }
 }

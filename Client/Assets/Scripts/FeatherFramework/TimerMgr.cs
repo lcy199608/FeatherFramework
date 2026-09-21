@@ -1,11 +1,30 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
-public class TimerMgr : Singleton<TimerMgr>
+public readonly struct TimerHandle : IDisposable
 {
+    private readonly TimerMgr owner;
+    private readonly int id;
+
+    internal TimerHandle(TimerMgr owner, int id)
+    {
+        this.owner = owner;
+        this.id = id;
+    }
+
+    public bool IsValid => owner != null && owner.HasTimer(id);
+
+    public void Dispose()
+    {
+        owner?.RemoveTimer(id);
+    }
+}
+
+public sealed class TimerMgr
+{
+    private readonly MonoBehaviour coroutineRunner;
     public delegate void CompleteEvent();
     class TimerData
     {
@@ -20,22 +39,29 @@ public class TimerMgr : Singleton<TimerMgr>
         public Coroutine coroutine; //标记协程
     }
 
-    int timerId = 0;
-    Dictionary<int, TimerData> timerDict = new Dictionary<int, TimerData>();
-    List<int> tempRemoveTimer = new List<int>();
+    private int timerId;
+    private bool stopped;
+    internal bool HasTimer(int id) => !stopped && timerDict.ContainsKey(id);
+    internal void Shutdown() { if (stopped) return; stopped = true; RemoveAllTimer(); }
+    private readonly Dictionary<int, TimerData> timerDict = new Dictionary<int, TimerData>();
+    private readonly List<TimerData> timerSnapshot = new List<TimerData>();
+    private readonly List<int> tempRemoveTimer = new List<int>();
 
-    public TimerMgr()
+    internal TimerMgr(MonoBehaviour coroutineRunner)
     {
-        //绑定Update
-        MonoMgr.Instance.AddUpdateListener(UpdateTime);
+        this.coroutineRunner = coroutineRunner ?? throw new ArgumentNullException(nameof(coroutineRunner));
     }
 
-    void UpdateTime()
+    internal void Tick()
     {
-        for(int i = timerDict.Count - 1; i >= 0 ; i--)
+        if (stopped) return;
+        timerSnapshot.Clear();
+        timerSnapshot.AddRange(timerDict.Values);
+        for(int i = timerSnapshot.Count - 1; i >= 0 ; i--)
         {
-            TimerData timeData = timerDict.ElementAt(i).Value;
-            if (!timeData.isSecond)
+            TimerData timeData = timerSnapshot[i];
+            if (!timeData.isSecond || !timerDict.TryGetValue(timeData.id, out var registered)
+                || !ReferenceEquals(registered, timeData))
             {
                 continue;
             }
@@ -43,7 +69,12 @@ public class TimerMgr : Singleton<TimerMgr>
             float nowTime = TimeNow(timeData.isIgnoreTimeScale);
             if (nowTime >= timeData.targetTime)
             {
-                timeData.onCompleted?.Invoke();
+                InvokeCallback(timeData);
+                if (!timerDict.ContainsKey(timeData.id))
+                {
+                    continue;
+                }
+
                 timeData.executeCount -= 1;
                 if (timeData.isLoop)
                 {
@@ -84,12 +115,18 @@ public class TimerMgr : Singleton<TimerMgr>
     /// <param name="isSecond">秒/帧数</param>
     /// <param name="isIgnoreTimeScale">是否受TimeScale影响</param>
     /// <returns></returns>
-    public int CreateNewTimer(float time, CompleteEvent onCompleted, bool isLoop = false, bool isSecond = true,bool isIgnoreTimeScale = false)
+    internal int CreateNewTimer(float time, CompleteEvent onCompleted, bool isLoop = false, bool isSecond = true,bool isIgnoreTimeScale = false)
     {
-        timerId += 1;
-        timerDict.Add(timerId, new TimerData()
+        if (stopped) throw new ObjectDisposedException(nameof(TimerMgr));
+        ValidateTimer(time, onCompleted, isSecond);
+        if (isLoop && time <= 0)
         {
-            id = timerId,
+            throw new ArgumentOutOfRangeException(nameof(time), time, "Looping timers require a positive interval.");
+        }
+        int createdId = checked(++timerId);
+        timerDict.Add(createdId, new TimerData()
+        {
+            id = createdId,
             onCompleted = onCompleted,
             time = time,
             targetTime = time + TimeNow(isIgnoreTimeScale),
@@ -102,9 +139,9 @@ public class TimerMgr : Singleton<TimerMgr>
         // 如果不是以秒为单位，则执行延迟帧数
         if (!isSecond)
         {
-            timerDict[timerId].coroutine = MonoMgr.Instance.StartCoroutine(DelayedExecution(timerDict[timerId]));
+            timerDict[createdId].coroutine = coroutineRunner.StartCoroutine(DelayedExecution(timerDict[createdId]));
         }
-        return timerId;
+        return createdId;
     }
 
     /// <summary>
@@ -116,12 +153,23 @@ public class TimerMgr : Singleton<TimerMgr>
     /// <param name="isSecond">秒/帧数</param>
     /// <param name="isIgnoreTimeScale">是否受TimeScale影响</param>
     /// <returns></returns>
-    public int CreateNewCountTimer(float time, CompleteEvent onCompleted, int count, bool isSecond = true, bool isIgnoreTimeScale = false)
+    internal int CreateNewCountTimer(float time, CompleteEvent onCompleted, int count, bool isSecond = true, bool isIgnoreTimeScale = false)
     {
-        timerId += 1;
-        timerDict.Add(timerId, new TimerData()
+        if (stopped) throw new ObjectDisposedException(nameof(TimerMgr));
+        ValidateTimer(time, onCompleted, isSecond);
+        if (count <= 0)
         {
-            id = timerId,
+            throw new ArgumentOutOfRangeException(nameof(count), count, "Timer count must be greater than zero.");
+        }
+        if (!isSecond && count > 1 && time <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(time), time, "Repeated frame timers require a positive interval.");
+        }
+
+        int createdId = checked(++timerId);
+        timerDict.Add(createdId, new TimerData()
+        {
+            id = createdId,
             onCompleted = onCompleted,
             time = time,
             targetTime = time + TimeNow(isIgnoreTimeScale),
@@ -134,22 +182,25 @@ public class TimerMgr : Singleton<TimerMgr>
         // 如果不是以秒为单位，则执行延迟帧数
         if (!isSecond)
         {
-            timerDict[timerId].coroutine = MonoMgr.Instance.StartCoroutine(DelayedExecution(timerDict[timerId]));
+            timerDict[createdId].coroutine = coroutineRunner.StartCoroutine(DelayedExecution(timerDict[createdId]));
         }
-        return timerId;
+        return createdId;
     }
 
     /// <summary>
     /// 移除指定定时器
     /// </summary>
-    public void RemoveTimer(int id)
+    internal void RemoveTimer(int id)
     {
         if (timerDict.ContainsKey(id))
         {
             TimerData data = timerDict[id];
             if (!data.isSecond)
             {
-                MonoMgr.Instance.StopCoroutine(data.coroutine);
+                if (data.coroutine != null)
+                {
+                    coroutineRunner.StopCoroutine(data.coroutine);
+                }
             }
             data = null;
             timerDict.Remove(id);
@@ -159,31 +210,37 @@ public class TimerMgr : Singleton<TimerMgr>
     /// <summary>
     /// 清除所有定时器
     /// </summary>
-    public void RemoveAllTimer()
+    internal void RemoveAllTimer()
     {
-        for (int i = timerDict.Count - 1; i >= 0; i--)
+        var timerIds = new List<int>(timerDict.Keys);
+        for (int i = timerIds.Count - 1; i >= 0; i--)
         {
-            int id = timerDict.ElementAt(i).Key;
-            RemoveTimer(id);
+            RemoveTimer(timerIds[i]);
         }
     }
 
     IEnumerator DelayedExecution(TimerData data)
     {
         // 等待指定的帧数
-        for (int i = 0; i < data.time; i++)
+        for (int i = 0; i < Mathf.Max(1, data.time); i++)
         {
             yield return null; // 等待下一帧
         }
+        if (!timerDict.ContainsKey(data.id) || stopped) yield break;
         // 执行动作
-        data.onCompleted?.Invoke();
+        InvokeCallback(data);
+        if (!timerDict.ContainsKey(data.id))
+        {
+            yield break;
+        }
+
         data.executeCount -= 1;
         if (data.isLoop)
         {
             // 防止完成事件中移除了定时器，不判断会导致依然执行协程
             if(data != null && timerDict.ContainsKey(data.id))
             {
-                data.coroutine = MonoMgr.Instance.StartCoroutine(DelayedExecution(data));
+                data.coroutine = coroutineRunner.StartCoroutine(DelayedExecution(data));
             }
         }
         else
@@ -196,9 +253,59 @@ public class TimerMgr : Singleton<TimerMgr>
             {
                 if (data != null && timerDict.ContainsKey(data.id))
                 {
-                    data.coroutine = MonoMgr.Instance.StartCoroutine(DelayedExecution(data));
+                    data.coroutine = coroutineRunner.StartCoroutine(DelayedExecution(data));
                 }
             }
+        }
+    }
+
+    public TimerHandle AfterSeconds(float seconds, CompleteEvent onCompleted, bool isIgnoreTimeScale = false)
+    {
+        return new TimerHandle(this, CreateNewTimer(seconds, onCompleted, false, true, isIgnoreTimeScale));
+    }
+
+    public TimerHandle EverySeconds(float interval, CompleteEvent onCompleted, bool isIgnoreTimeScale = false)
+    {
+        return new TimerHandle(this, CreateNewTimer(interval, onCompleted, true, true, isIgnoreTimeScale));
+    }
+
+    public TimerHandle AfterFrames(int frames, CompleteEvent onCompleted)
+    {
+        return new TimerHandle(this, CreateNewTimer(frames, onCompleted, false, false));
+    }
+
+    public TimerHandle EveryFrames(int interval, CompleteEvent onCompleted)
+    {
+        return new TimerHandle(this, CreateNewTimer(interval, onCompleted, true, false));
+    }
+
+    private static void InvokeCallback(TimerData data)
+    {
+        try
+        {
+            data.onCompleted?.Invoke();
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception);
+        }
+    }
+
+    private static void ValidateTimer(float time, CompleteEvent onCompleted, bool isSecond)
+    {
+        if (float.IsNaN(time) || float.IsInfinity(time) || time < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(time), time, "Timer duration cannot be negative.");
+        }
+
+        if (!isSecond && time != Mathf.Floor(time))
+        {
+            throw new ArgumentException("Frame timers require a whole number of frames.", nameof(time));
+        }
+
+        if (onCompleted == null)
+        {
+            throw new ArgumentNullException(nameof(onCompleted));
         }
     }
 }

@@ -1,0 +1,12 @@
+{
+  "name": "Feather.Runtime",
+  "rootNamespace": "Feather",
+    "references": [
+        "Feather.Config.Generated",
+        "EasySave3",
+        "Feather.UnityLogsViewer",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
+    ],
+  "autoReferenced": true
+}

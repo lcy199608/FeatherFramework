@@ -1,0 +1,16 @@
+{
+  "name": "Feather.Tests.EditMode",
+  "rootNamespace": "Feather.Tests",
+  "references": [
+    "Feather.Runtime", "Feather.Config.Generated", "Unity.ugui",
+    "EasySave3"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}
+

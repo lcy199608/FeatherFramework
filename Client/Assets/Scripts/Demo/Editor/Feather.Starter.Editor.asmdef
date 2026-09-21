@@ -1,0 +1,6 @@
+{
+  "name": "Feather.Starter.Editor",
+  "references": ["Feather.Runtime", "Feather.Starter", "Unity.ugui", "Unity.Addressables.Editor"],
+  "includePlatforms": ["Editor"]
+}
+

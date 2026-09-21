@@ -1,0 +1,11 @@
+{
+  "name": "Feather.UnityLogsViewer.Editor",
+  "rootNamespace": "Feather.Diagnostics.Editor",
+  "references": [
+    "Feather.UnityLogsViewer"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": true
+}

@@ -15,18 +15,18 @@ namespace cfg
         public RedDot RedDot { get; }
         public UIPage UIPage { get; }
 
-        private Tables()
+        private Tables(System.Func<string, bool> shouldLoad)
         {
-            Item = new Item(LoadRows("Item", ItemInfo.ReadFrom));
-            Language = new Language(LoadRows("Language", LanguageInfo.ReadFrom));
-            Monster = new Monster(LoadRows("Monster", MonsterInfo.ReadFrom));
-            RedDot = new RedDot(LoadRows("RedDot", RedDotInfo.ReadFrom));
-            UIPage = new UIPage(LoadRows("UIPage", UIPageInfo.ReadFrom));
+            Item = new Item(shouldLoad == null || shouldLoad("Item") ? LoadRows("Item", ItemInfo.ReadFrom) : new List<ItemInfo>());
+            Language = new Language(shouldLoad == null || shouldLoad("Language") ? LoadRows("Language", LanguageInfo.ReadFrom) : new List<LanguageInfo>());
+            Monster = new Monster(shouldLoad == null || shouldLoad("Monster") ? LoadRows("Monster", MonsterInfo.ReadFrom) : new List<MonsterInfo>());
+            RedDot = new RedDot(shouldLoad == null || shouldLoad("RedDot") ? LoadRows("RedDot", RedDotInfo.ReadFrom) : new List<RedDotInfo>());
+            UIPage = new UIPage(shouldLoad == null || shouldLoad("UIPage") ? LoadRows("UIPage", UIPageInfo.ReadFrom) : new List<UIPageInfo>());
         }
 
-        public static Tables Load()
+        public static Tables Load(System.Func<string, bool> shouldLoad = null)
         {
-            return new Tables();
+            return new Tables(shouldLoad);
         }
 
         private static readonly byte[] BinaryMagic = { 0x46, 0x43, 0x46, 0x47 };
@@ -64,25 +64,35 @@ namespace cfg
             using var reader = new BinaryReader(stream);
 
             reader.ReadBytes(BinaryMagic.Length);
-            int count = reader.ReadInt32();
+            int marker = reader.ReadInt32();
+            if (marker < 0 && marker != -1) throw new InvalidDataException("Unsupported config binary version.");
+            if (marker >= 0) stream.Position -= 4; // Legacy format: first value was the row count.
+            int count = ReadCount(reader);
             var rows = new List<T>(count);
             for (int i = 0; i < count; i++)
             {
                 rows.Add(readBinaryRow(reader));
             }
+            if (stream.Position != stream.Length) throw new InvalidDataException("Unexpected trailing config data.");
             return rows;
         }
 
+        private static int ReadCount(BinaryReader reader)
+        {
+            int count = reader.ReadInt32();
+            if (count < 0 || count > 1000000 || count > reader.BaseStream.Length - reader.BaseStream.Position) throw new InvalidDataException("Invalid config length.");
+            return count;
+        }
         public static string ReadString(BinaryReader reader)
         {
-            int byteCount = reader.ReadInt32();
+            int byteCount = ReadCount(reader);
             byte[] bytes = reader.ReadBytes(byteCount);
-            return System.Text.Encoding.UTF8.GetString(bytes);
+            return new System.Text.UTF8Encoding(false, true).GetString(bytes);
         }
 
         public static List<T> ReadArray<T>(BinaryReader reader, System.Func<BinaryReader, T> readItem)
         {
-            int count = reader.ReadInt32();
+            int count = ReadCount(reader);
             var items = new List<T>(count);
             for (int i = 0; i < count; i++)
             {

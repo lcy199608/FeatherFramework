@@ -1,0 +1,4 @@
+{
+  "name": "Feather.Starter",
+  "references": ["Feather.Runtime", "Unity.ugui"]
+}

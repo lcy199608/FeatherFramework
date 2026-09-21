@@ -7,56 +7,112 @@ using System.Text;
 using System.IO;
 using Newtonsoft.Json;
 
-public static class SaveDataMgr
+public sealed class SaveDataMgr
 {
     const int KEY_SIZE = 256;
     const string SYS_DATA_FILE_NAME = "sys"; 
     const string TEMP_DATA_FILE_NAME = "data";
     const string EXIST_TEMP_SLOT_TITLE = "ExistSlots";
 
-    public static int? CurrentTempSlotId { get; private set; } //当前的SlotId
+    public int? CurrentTempSlotId { get; private set; } //当前的SlotId
 
-    static ES3Settings es3Setting; //ES3的配置
-    static Dictionary<string, string> systemDataDic; //系统数据
-    static Dictionary<int, Dictionary<string, string>> tempDataDic; // 当前加载的临时数据
-    static HashSet<int> existTempDataSlotSet; //当前的存档位
-    static string initVector;
+    ES3Settings es3Setting; //ES3的配置
+    Dictionary<string, string> systemDataDic; //系统数据
+    Dictionary<int, Dictionary<string, string>> tempDataDic; // 当前加载的临时数据
+    HashSet<int> existTempDataSlotSet; //当前的存档位
+    string initVector;
+    bool systemDataDirty;
+    bool tempDataDirty;
+    private bool stopped;
+    public Exception ReadError { get; private set; }
+    public bool IsReadOnly => ReadError != null;
+
+    private void EnsureWritable()
+    {
+        if (stopped) throw new ObjectDisposedException(nameof(SaveDataMgr));
+        if (ReadError != null) throw new InvalidOperationException("Save data could not be read. Restore the original file and retry before writing.", ReadError);
+    }
+
+    // Retrying only a failed read preserves normal dirty data and never deletes the source file.
+    public bool RetryRead()
+    {
+        if (stopped) throw new ObjectDisposedException(nameof(SaveDataMgr));
+        if (ReadError == null) return true;
+        int? slot = CurrentTempSlotId;
+        CurrentTempSlotId = null;
+        ReadError = null;
+        Initialize(es3Setting);
+        if (slot.HasValue && ReadError == null) LoadData(slot.Value);
+        return ReadError == null;
+    }
+
+    internal void Shutdown()
+    {
+        if (stopped) return;
+        try { if (!IsReadOnly) ApplyChangesToDatabase(); }
+        finally { stopped = true; }
+    }
+
+    internal SaveDataMgr() { }
 
     //初始化
-    public static void Initialize()
+    public void Initialize()
     {
+        Initialize(new ES3Settings(ES3.EncryptionType.AES, Application.productName));
+    }
+
+    internal void Initialize(ES3Settings settings)
+    {
+        if (stopped) throw new ObjectDisposedException(nameof(SaveDataMgr));
+        if (systemDataDirty || tempDataDirty) throw new InvalidOperationException("Flush pending changes before reinitializing save data.");
         initVector = GetMd5Str(Application.productName + SystemInfo.deviceModel);
-        es3Setting = new ES3Settings(ES3.EncryptionType.AES, Application.productName);
+        es3Setting = settings ?? throw new ArgumentNullException(nameof(settings));
 
         try
         {
             systemDataDic = ES3.Load(SYS_DATA_FILE_NAME, new Dictionary<string, string>(), es3Setting);
         }
-        catch
+        catch (Exception exception)
         {
-            ES3.DeleteFile();
-            systemDataDic = ES3.Load(SYS_DATA_FILE_NAME, new Dictionary<string, string>(), es3Setting);
+            ReadError = exception;
+            Debug.LogError($"Failed to load system save data. An empty in-memory save will be used and the original file will be preserved.\n{exception}");
+            systemDataDic = new Dictionary<string, string>();
         }
 
+        systemDataDic ??= new Dictionary<string, string>();
         existTempDataSlotSet = GetSystemData(EXIST_TEMP_SLOT_TITLE, new HashSet<int>());
+        existTempDataSlotSet ??= new HashSet<int>();
 
         Debug.Log("Game Data Init Success");
     }
 
     // 加载数据
-    public static void LoadData(int SlotId)
+    public void LoadData(int SlotId)
     {
+        EnsureWritable();
         if (CurrentTempSlotId == null || CurrentTempSlotId != SlotId)
         {
             if (CurrentTempSlotId != null)
             {
-                tempDataDic.Clear();
+                ApplyChangesToDatabase();
             }
             CurrentTempSlotId = SlotId;
 
-            tempDataDic = ES3.Load(string.Join("_", TEMP_DATA_FILE_NAME, SlotId), new Dictionary<int, Dictionary<string, string>>(), es3Setting);
+            string slotFileName = string.Join("_", TEMP_DATA_FILE_NAME, SlotId);
+            try
+            {
+                tempDataDic = ES3.Load(slotFileName, new Dictionary<int, Dictionary<string, string>>(), es3Setting);
+            }
+            catch (Exception exception)
+            {
+                ReadError = exception;
+                Debug.LogError($"Failed to load save slot {SlotId}. Empty in-memory data will be used and {slotFileName} will be preserved.\n{exception}");
+                tempDataDic = new Dictionary<int, Dictionary<string, string>>();
+            }
+            tempDataDic ??= new Dictionary<int, Dictionary<string, string>>();
+            tempDataDirty = false;
 
-            if (!existTempDataSlotSet.Contains(SlotId))
+            if (ReadError == null && !existTempDataSlotSet.Contains(SlotId))
             {
                 existTempDataSlotSet.Add(SlotId);
                 SetSystemData(EXIST_TEMP_SLOT_TITLE, existTempDataSlotSet, true);
@@ -65,8 +121,10 @@ public static class SaveDataMgr
     }
 
     // 存储系统数据
-    public static void SetSystemData<T>(string ID, T value, bool SaveImmediately = false)
+    public void SetSystemData<T>(string ID, T value, bool SaveImmediately = false)
     {
+        EnsureWritable();
+        ValidateKey(ID);
         if (systemDataDic == null)
         {
             throw new Exception("未加载系统数据");
@@ -78,6 +136,10 @@ public static class SaveDataMgr
         {
             if (systemDataDic[ID] == s)
             {
+                if (SaveImmediately && systemDataDirty)
+                {
+                    SaveSystemData();
+                }
                 return;
             }
             systemDataDic[ID] = s;
@@ -87,15 +149,17 @@ public static class SaveDataMgr
             systemDataDic.Add(ID, s);
         }
 
+        systemDataDirty = true;
         if (SaveImmediately)
         {
-            ES3.Save<Dictionary<string, string>>(SYS_DATA_FILE_NAME, systemDataDic, es3Setting);
+            SaveSystemData();
         }
     }
 
     // 获取系统数据
-    public static T GetSystemData<T>(string ID, T defaultValue)
+    public T GetSystemData<T>(string ID, T defaultValue)
     {
+        ValidateKey(ID);
         if (systemDataDic == null)
         {
             throw new Exception("未加载系统数据");
@@ -103,14 +167,24 @@ public static class SaveDataMgr
 
         if (systemDataDic.ContainsKey(ID))
         {
-            return JsonConvert.DeserializeObject<T>(DecryptString(systemDataDic[ID], ID));
+            try
+            {
+                return JsonConvert.DeserializeObject<T>(DecryptString(systemDataDic[ID], ID));
+            }
+            catch (Exception exception)
+            {
+                ReadError = exception;
+                Debug.LogError($"Failed to decode system save key '{ID}'. The default value will be used.\n{exception}");
+            }
         }
         return defaultValue;
     }
 
     // 存储普通数据
-    public static void SetData<T>(string ID, T value, bool SaveImmediately = true,int GroupID = 0)
+    public void SetData<T>(string ID, T value, bool SaveImmediately = true,int GroupID = 0)
     {
+        EnsureWritable();
+        ValidateKey(ID);
         if (CurrentTempSlotId == null)
         {
             throw new Exception("并未加载临时数据");
@@ -121,11 +195,19 @@ public static class SaveDataMgr
         {
             tempDataDic.Add(GroupID, new Dictionary<string, string>());
         }
+        else if (tempDataDic[GroupID] == null)
+        {
+            tempDataDic[GroupID] = new Dictionary<string, string>();
+        }
 
         if (tempDataDic[GroupID].ContainsKey(ID))
         {
             if (tempDataDic[GroupID][ID] == s)
             {
+                if (SaveImmediately && tempDataDirty)
+                {
+                    SaveTempData();
+                }
                 return;
             }
             tempDataDic[GroupID][ID] = s;
@@ -135,79 +217,60 @@ public static class SaveDataMgr
             tempDataDic[GroupID].Add(ID, s);
         }
 
+        tempDataDirty = true;
         if (SaveImmediately)
         {
-            ES3.Save<Dictionary<int, Dictionary<string, string>>>(string.Join("_", TEMP_DATA_FILE_NAME, CurrentTempSlotId), tempDataDic, es3Setting);
+            SaveTempData();
         }
     }
 
     // 获取普通数据
-    public static T GetData<T>(string ID, T defaultValue, int GroupId = 0)
+    public T GetData<T>(string ID, T defaultValue, int GroupId = 0)
     {
+        ValidateKey(ID);
         if (CurrentTempSlotId == null)
         {
             throw new Exception("并未加载临时数据");
         }
 
-        if (tempDataDic.ContainsKey(GroupId) && tempDataDic[GroupId].ContainsKey(ID))
+        if (tempDataDic != null && tempDataDic.ContainsKey(GroupId)
+            && tempDataDic[GroupId] != null && tempDataDic[GroupId].ContainsKey(ID))
         {
-            return JsonConvert.DeserializeObject<T>(DecryptString(tempDataDic[GroupId][ID], ID));
+            try
+            {
+                return JsonConvert.DeserializeObject<T>(DecryptString(tempDataDic[GroupId][ID], ID));
+            }
+            catch (Exception exception)
+            {
+                ReadError = exception;
+                Debug.LogError($"Failed to decode save key '{ID}' in group {GroupId}. The default value will be used.\n{exception}");
+            }
         }
-        else
-        {
-            return defaultValue;
-        }
+        return defaultValue;
     }
 
-    // 取值
-    public static T GetValue<T>(SQLIdHolder key, T defaultValue)
+    public void ApplyChangesToDatabase()
     {
-        if (key.IsSystemData)
-        {
-            return GetSystemData(key.ID, defaultValue);
-        }
-        else
-        {
-            return GetData(key.ID, defaultValue, key.GroupID);
-        }
-    }
-
-    // 存值
-    public static void SetValue<T>(SQLIdHolder key, T value, bool SaveImmediately = true)
-    {
-        if (key.IsSystemData)
-        {
-            SetSystemData(key.ID, value, SaveImmediately);
-        }
-        else
-        {
-            SetData(key.ID, value, SaveImmediately, key.GroupID);
-        }
-    }
-
-    public static void ApplyChangesToDatabase()
-    {
+        EnsureWritable();
         if (systemDataDic == null)
         {
             throw new Exception("未加载系统数据");
         }
 
-        lock (systemDataDic)
+        if (systemDataDirty)
         {
-            ES3.Save<Dictionary<string, string>>(SYS_DATA_FILE_NAME, systemDataDic, es3Setting);
+            SaveSystemData();
         }
-        if (CurrentTempSlotId != null)
+        if (CurrentTempSlotId != null && tempDataDirty)
         {
-            lock (tempDataDic)
-            {
-                ES3.Save<Dictionary<int, Dictionary<string, string>>>(string.Join("_", TEMP_DATA_FILE_NAME, CurrentTempSlotId), tempDataDic, es3Setting);
-            }
+            SaveTempData();
         }
     }
 
     //删除某个GroupId
-    public static void DeleteTempDataGroup(int GroupId = 0)
+    public void DeleteTempDataGroup(int GroupId = 0)
     {
+        EnsureWritable();
         if (CurrentTempSlotId == null)
         {
             throw new Exception("并未加载临时数据的SQL");
@@ -215,31 +278,60 @@ public static class SaveDataMgr
         if (tempDataDic.ContainsKey(GroupId))
         {
             tempDataDic.Remove(GroupId);
+            tempDataDirty = true;
+            SaveTempData();
         }
     }
 
     //清除某个slot档位
-    public static void DeleteTempDataTable(int slotID = 0)
+    public void DeleteTempDataTable(int slotID = 0)
     {
+        EnsureWritable();
+        // Slots are keys inside the shared ES3 file, not separate files.
+        // Delete first: a failed storage operation must retain the current in-memory slot.
+        ES3.DeleteKey(string.Join("_", TEMP_DATA_FILE_NAME, slotID), es3Setting);
         if (CurrentTempSlotId == slotID)
         {
             CurrentTempSlotId = null;
             tempDataDic?.Clear();
+            tempDataDirty = false;
         }
-        if (existTempDataSlotSet.Contains(slotID))
-        {
-            existTempDataSlotSet.Remove(slotID);
-            SetSystemData(EXIST_TEMP_SLOT_TITLE, existTempDataSlotSet, true);
-            ES3.DeleteKey(string.Join("_", TEMP_DATA_FILE_NAME, slotID));
-        }
+        // A failed index write leaves systemDataDirty set and can be retried safely.
+        existTempDataSlotSet.Remove(slotID);
+        SetSystemData(EXIST_TEMP_SLOT_TITLE, existTempDataSlotSet, true);
     }
 
     //清除全部数据
-    public static void DeleteAllTempDataTable()
+    public void DeleteAllTempDataTable()
     {
         foreach (var item in existTempDataSlotSet.ToList())
         {
             DeleteTempDataTable(item);
+        }
+    }
+
+    private void SaveSystemData()
+    {
+        ES3.Save<Dictionary<string, string>>(SYS_DATA_FILE_NAME, systemDataDic, es3Setting);
+        systemDataDirty = false;
+    }
+
+    private void SaveTempData()
+    {
+        if (CurrentTempSlotId == null || tempDataDic == null)
+        {
+            return;
+        }
+        ES3.Save<Dictionary<int, Dictionary<string, string>>>(
+            string.Join("_", TEMP_DATA_FILE_NAME, CurrentTempSlotId), tempDataDic, es3Setting);
+        tempDataDirty = false;
+    }
+
+    private static void ValidateKey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            throw new ArgumentException("Save key cannot be empty.", nameof(key));
         }
     }
 
@@ -253,7 +345,7 @@ public static class SaveDataMgr
     }
 
     //加密
-    private static string EncryptString(string plainText, string passPhrase)
+    private string EncryptString(string plainText, string passPhrase)
     {
 #if UNITY_EDITOR
         //return plainText;
@@ -276,7 +368,7 @@ public static class SaveDataMgr
     }
 
     //解密
-    private static string DecryptString(string cipherText, string passPhrase)
+    private string DecryptString(string cipherText, string passPhrase)
     {
 #if UNITY_EDITOR
         //return cipherText;

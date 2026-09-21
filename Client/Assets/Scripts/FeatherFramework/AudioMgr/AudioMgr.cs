@@ -1,9 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using System.Linq;
-using DG.Tweening;
 using System;
+using System.Collections.Generic;
+using DG.Tweening;
+using UnityEngine;
 using UnityEngine.Events;
 
 public enum AudioType
@@ -12,208 +10,406 @@ public enum AudioType
     EFFECT
 }
 
-public class AudioMgr : DontDestroyMonoSingleton<AudioMgr>
+public readonly struct AudioVoiceHandle : IEquatable<AudioVoiceHandle>
 {
-    const string path = "Audios/";
+    internal readonly AudioMgr Owner;
+    internal readonly int Id;
 
-    const string volFile = "BGMVolSaveData";
-    const string effectVolFile = "EffectVolSaveData";
+    internal AudioVoiceHandle(AudioMgr owner, int id)
+    {
+        Owner = owner;
+        Id = id;
+    }
 
-    private AudioSource tempAudio;
-    private Dictionary<AudioSource, AudioType> audioSources = new Dictionary<AudioSource, AudioType>();
+    public bool IsValid => Owner != null && Owner.HasVoice(Id);
 
-    float bmgVol;
-    float effectVol;
+    public void Stop(float fadeTime = 0)
+    {
+        Owner?.Stop(this, fadeTime);
+    }
+
+    public bool Equals(AudioVoiceHandle other) => Owner == other.Owner && Id == other.Id;
+    public override bool Equals(object obj) => obj is AudioVoiceHandle other && Equals(other);
+    public override int GetHashCode() => HashCode.Combine(Owner, Id);
+}
+
+public sealed class AudioMgr : MonoBehaviour
+{
+    private sealed class Voice
+    {
+        public int Id;
+        public string ClipName;
+        public AudioType Type;
+        public bool Loop;
+        public bool Cancelled;
+        public bool StopRequested;
+        public float BaseVolume;
+        public float ReservedUntil;
+        public AudioSource Source;
+        public Tween Fade;
+    }
+
+    private readonly List<Voice> completedVoices = new List<Voice>();
+    private readonly List<AudioSource> audioSources = new List<AudioSource>();
+    private readonly Dictionary<AudioSource, Voice> sourceVoices = new Dictionary<AudioSource, Voice>();
+    private readonly Dictionary<int, Voice> voices = new Dictionary<int, Voice>();
+    private Action<string, UnityAction<AudioClip>> loadClip;
+    private SaveDataMgr save;
+    private int voiceId;
+    private bool isInitialized;
+
+    private const string Path = "Audios/";
+    private const string BgmVolumeKey = "BGMVolSaveData";
+    private const string EffectVolumeKey = "EffectVolSaveData";
+
+    private float bgmVolume = 1f;
+    private float effectVolume = 1f;
 
     private float BGMVol
     {
-        get { return bmgVol; }
-        set 
+        get => bgmVolume;
+        set
         {
-            if(value != BGMVol) 
+            ValidateNumber(value, nameof(value));
+            float clamped = Mathf.Clamp01(value);
+            if (Mathf.Approximately(clamped, bgmVolume))
             {
-                bmgVol = value;
-                ChangeBGMVolume(BGMVol);
+                return;
             }
+            bgmVolume = clamped;
+            ChangeVolume(AudioType.BGM, bgmVolume);
         }
     }
 
     private float EffectVol
     {
-        get { return effectVol; }
-        set 
+        get => effectVolume;
+        set
         {
-            if(value != EffectVol)
+            ValidateNumber(value, nameof(value));
+            float clamped = Mathf.Clamp01(value);
+            if (Mathf.Approximately(clamped, effectVolume))
             {
-                effectVol = value;
-                ChangeEffectVolume(EffectVol);
+                return;
             }
+            effectVolume = clamped;
+            ChangeVolume(AudioType.EFFECT, effectVolume);
         }
     }
 
-    public AudioMgr()
+    internal void Initialize(ResMgr assets, SaveDataMgr save)
     {
-        BGMVol = SaveDataMgr.GetSystemData(volFile, 1.0f);
-        EffectVol = SaveDataMgr.GetSystemData(effectVolFile, 1.0f);
+        if (assets == null) throw new ArgumentNullException(nameof(assets));
+        Initialize(assets.LoadAsync<AudioClip>, save);
     }
 
-    // 播放音效
-    public void PlayAudio(string clipName, AudioType type, float fadeTime = 0, float delayTime = 0)
+    internal void Initialize(Action<string, UnityAction<AudioClip>> loader, SaveDataMgr save)
     {
-        GetAudioClip(clipName, clip => {
-            tempAudio = GetAudioSource();
-            tempAudio.volume = 0;
-            tempAudio.clip = clip;
-            tempAudio.loop = false;
+        if (isInitialized)
+        {
+            return;
+        }
 
-            if (audioSources.ContainsKey(tempAudio))
-            {
-                audioSources[tempAudio] = type;
-            }
-            else
-            {
-                audioSources.Add(tempAudio, type);
-            }
-
-            tempAudio.PlayDelayed(delayTime);
-            switch (type)
-            {
-                case AudioType.BGM:
-                    tempAudio.DOFade(BGMVol, fadeTime).SetDelay(delayTime).Restart();
-                    break;
-                case AudioType.EFFECT:
-                    tempAudio.DOFade(EffectVol, fadeTime).SetDelay(delayTime).Restart();
-                    break;
-            }
-        });
+        loadClip = loader ?? throw new ArgumentNullException(nameof(loader));
+        this.save = save ?? throw new ArgumentNullException(nameof(save));
+        BGMVol = save.GetSystemData(BgmVolumeKey, 1f);
+        EffectVol = save.GetSystemData(EffectVolumeKey, 1f);
+        isInitialized = true;
     }
 
-    // 播放循环音频
-    public void PlayLoopAudio(string clipName, AudioType type, float fadeTime = 0, float delayTime = 0)
+    public AudioVoiceHandle PlayAudio(string clipName, AudioType type, float fadeTime = 0, float delayTime = 0)
     {
-        GetAudioClip(clipName, clip => {
-            tempAudio = GetAudioSource();
-            tempAudio.volume = 0;
-            tempAudio.clip = clip;
-            tempAudio.loop = true;
-
-            if (audioSources.ContainsKey(tempAudio))
-            {
-                audioSources[tempAudio] = type;
-            }
-            else
-            {
-                audioSources.Add(tempAudio, type);
-            }
-
-            tempAudio.PlayDelayed(delayTime);
-
-            switch (type)
-            {
-                case AudioType.BGM:
-                    tempAudio.DOFade(BGMVol, fadeTime).SetDelay(delayTime).Restart();
-                    break;
-                case AudioType.EFFECT:
-                    tempAudio.DOFade(EffectVol, fadeTime).SetDelay(delayTime).Restart();
-                    break;
-            }
-        });
+        return PlayInternal(clipName, type, false, fadeTime, delayTime);
     }
 
-    // 获取音频文件
-    private void GetAudioClip(string clipName, UnityAction<AudioClip> action)
+    public AudioVoiceHandle PlayLoopAudio(string clipName, AudioType type, float fadeTime = 0, float delayTime = 0)
     {
-        ResMgr.Instance.LoadAsync(path + clipName, action);
+        return PlayInternal(clipName, type, true, fadeTime, delayTime);
     }
 
-    // 获取AudioSource组件
+    private AudioVoiceHandle PlayInternal(string clipName, AudioType type, bool loop, float fadeTime, float delayTime)
+    {
+        if (!isInitialized)
+        {
+            Debug.LogError("Audio service is not initialized.");
+            return default;
+        }
+        if (string.IsNullOrWhiteSpace(clipName))
+        {
+            throw new ArgumentException("Audio clip name cannot be empty.", nameof(clipName));
+        }
+        ValidateNumber(fadeTime, nameof(fadeTime));
+        ValidateNumber(delayTime, nameof(delayTime));
+        if (!Enum.IsDefined(typeof(AudioType), type)) throw new ArgumentOutOfRangeException(nameof(type));
+        if (fadeTime < 0 || delayTime < 0)
+        {
+            throw new ArgumentOutOfRangeException(fadeTime < 0 ? nameof(fadeTime) : nameof(delayTime));
+        }
+
+        if (type == AudioType.BGM)
+        {
+            StopAll(AudioType.BGM);
+        }
+
+        var voice = new Voice
+        {
+            Id = ++voiceId,
+            ClipName = clipName,
+            Type = type,
+            Loop = loop,
+            BaseVolume = 1f
+        };
+        voices.Add(voice.Id, voice);
+
+        GetAudioClip(clipName, clip => StartVoice(voice, clip, fadeTime, delayTime));
+        return new AudioVoiceHandle(this, voice.Id);
+    }
+
+    private void StartVoice(Voice voice, AudioClip clip, float fadeTime, float delayTime)
+    {
+        if (!voices.ContainsKey(voice.Id) || voice.Cancelled)
+        {
+            return;
+        }
+        if (clip == null)
+        {
+            Debug.LogError($"Audio clip not found: {voice.ClipName}");
+            RemoveVoice(voice);
+            return;
+        }
+
+        var source = GetAudioSource();
+        if (sourceVoices.TryGetValue(source, out var oldVoice))
+        {
+            RemoveVoice(oldVoice);
+        }
+
+        voice.Source = source;
+        sourceVoices[source] = voice;
+        source.clip = clip;
+        source.loop = voice.Loop;
+        source.playOnAwake = false;
+        voice.BaseVolume = 1f;
+        source.volume = fadeTime > 0 ? 0 : GetChannelVolume(voice.Type);
+        voice.ReservedUntil = Time.unscaledTime + delayTime;
+        source.PlayDelayed(delayTime);
+
+        if (fadeTime > 0)
+        {
+            voice.Fade = DOTween.To(
+                    () => source.volume,
+                    value => source.volume = value,
+                    GetChannelVolume(voice.Type),
+                    fadeTime)
+                .SetUpdate(true)
+                .SetTarget(source)
+                .SetDelay(delayTime);
+        }
+    }
+
+    private void GetAudioClip(string clipName, UnityAction<AudioClip> callback)
+    {
+        if (loadClip == null)
+        {
+            callback?.Invoke(null);
+            return;
+        }
+        loadClip(Path + clipName, callback);
+    }
+
     private AudioSource GetAudioSource()
     {
-        var allAudioSources = audioSources.Keys;
-        foreach (var audio in allAudioSources)
+        float now = Time.unscaledTime;
+        for (int i = 0; i < audioSources.Count; i++)
         {
-            if (!audio.isPlaying)
+            var source = audioSources[i];
+            if (source != null && !source.isPlaying && sourceVoices.TryGetValue(source, out var voice)
+                && (AudioListener.pause || voice.ReservedUntil > now))
             {
-                return audio;
+                continue;
+            }
+            if (source != null && !source.isPlaying)
+            {
+                return source;
             }
         }
-        return AddAudioSource();
+
+        var newSource = gameObject.AddComponent<AudioSource>();
+        newSource.playOnAwake = false;
+        newSource.spatialBlend = 0;
+        audioSources.Add(newSource);
+        return newSource;
     }
 
-    // 增加组件
-    private AudioSource AddAudioSource()
+    internal void Stop(AudioVoiceHandle handle, float fadeTime = 0)
     {
-        tempAudio = gameObject.AddComponent<AudioSource>();
-        tempAudio.playOnAwake = false;
-        tempAudio.spatialBlend = 0;
-        return tempAudio;
-    }
-
-    // 停止某个循环的音频
-    public void StopAudio(string clipName, float fadeTime = 0)
-    {
-        var tempAudios = audioSources.Keys;
-        foreach (var audio in tempAudios)
+        ValidateNumber(fadeTime, nameof(fadeTime));
+        if (fadeTime < 0) throw new ArgumentOutOfRangeException(nameof(fadeTime));
+        if (handle.Owner != this || !voices.TryGetValue(handle.Id, out var voice))
         {
-            if(audio.clip.name == clipName && audio.isPlaying)
+            return;
+        }
+        voice.Cancelled = true;
+        if (voice.Source == null)
+        {
+            RemoveVoice(voice);
+            return;
+        }
+
+        KillFade(voice);
+        if (fadeTime > 0 && voice.Source.isPlaying)
+        {
+            voice.StopRequested = true;
+            voice.Fade = DOTween.To(() => voice.Source.volume, value => voice.Source.volume = value, 0, fadeTime)
+                .SetUpdate(true)
+                .SetTarget(voice.Source)
+                .OnComplete(() => FinishStop(voice));
+        }
+        else
+        {
+            FinishStop(voice);
+        }
+    }
+
+    private void FinishStop(Voice voice)
+    {
+        if (voice.Source != null)
+        {
+            voice.Source.Stop();
+            voice.Source.clip = null;
+        }
+        RemoveVoice(voice);
+    }
+
+    internal void StopAudio(string clipName, float fadeTime = 0)
+    {
+        var matchingVoices = new List<Voice>();
+        foreach (var voice in voices.Values)
+        {
+            if (voice.ClipName == clipName)
             {
-                if (fadeTime != 0)
-                {
-                    DOTween.To(() => audio.volume, vol => audio.volume = vol, 0, fadeTime)
-                        .OnComplete(() => audio.Stop());
-                }
-                else
-                {
-                    audio.Stop();
-                }
+                matchingVoices.Add(voice);
+            }
+        }
+        foreach (var voice in matchingVoices)
+        {
+            Stop(new AudioVoiceHandle(this, voice.Id), fadeTime);
+        }
+    }
+
+    public void StopAll(AudioType? type = null)
+    {
+        var activeVoices = new List<Voice>(voices.Values);
+        foreach (var voice in activeVoices)
+        {
+            if (!type.HasValue || voice.Type == type.Value)
+            {
+                Stop(new AudioVoiceHandle(this, voice.Id));
             }
         }
     }
 
-    // 改变音量
-    private void ChangeBGMVolume(float v)
+    private void RemoveVoice(Voice voice)
     {
-        foreach (var kv in audioSources)
+        KillFade(voice);
+        if (voice.Source != null && sourceVoices.TryGetValue(voice.Source, out var sourceVoice)
+            && ReferenceEquals(sourceVoice, voice))
         {
-            if (kv.Value == AudioType.BGM)
-            {
-                kv.Key.volume = v;
-            }
+            sourceVoices.Remove(voice.Source);
+        }
+        voices.Remove(voice.Id);
+        voice.Source = null;
+    }
+
+    private static void KillFade(Voice voice)
+    {
+        if (voice.Fade != null)
+        {
+            voice.Fade.Kill();
+            voice.Fade = null;
+        }
+        if (voice.Source != null)
+        {
+            DOTween.Kill(voice.Source);
         }
     }
 
-    private void ChangeEffectVolume(float v)
+    private void ChangeVolume(AudioType type, float volume)
     {
-        foreach (var kv in audioSources)
+        foreach (var voice in voices.Values)
         {
-            if (kv.Value == AudioType.EFFECT)
+            if (voice.Type != type || voice.Source == null)
             {
-                kv.Key.volume = v;
+                continue;
             }
+            if (voice.StopRequested)
+            {
+                continue;
+            }
+            KillFade(voice);
+            voice.Source.volume = voice.BaseVolume * volume;
+        }
+    }
+
+    internal bool HasVoice(int id)
+    {
+        return id > 0 && voices.ContainsKey(id);
+    }
+
+    private float GetChannelVolume(AudioType type)
+    {
+        return type == AudioType.BGM ? BGMVol : EffectVol;
+    }
+
+    private void Update()
+    {
+        if (voices.Count == 0 || AudioListener.pause)
+        {
+            return;
+        }
+
+        float now = Time.unscaledTime;
+        completedVoices.Clear();
+        foreach (var voice in voices.Values)
+        {
+            if (!voice.Loop && !voice.StopRequested && voice.Source != null
+                && now >= voice.ReservedUntil && !voice.Source.isPlaying)
+            {
+                completedVoices.Add(voice);
+            }
+        }
+        foreach (var voice in completedVoices)
+        {
+            if (voice.Source != null)
+            {
+                voice.Source.clip = null;
+            }
+            RemoveVoice(voice);
         }
     }
 
     public void MuteBG()
     {
-        if (BGMVol != 0)
-        {
-            ChangeBGMVolume(0);
-        }
+        BGMVol = 0;
         SaveBGMVolume();
     }
 
     public void MuteEffect()
     {
-        if (EffectVol != 0)
-        {
-            ChangeEffectVolume(0);
-        }
+        EffectVol = 0;
         SaveEffectVolume();
     }
 
-    /// <summary>
-    /// 保存音量数据 为防止频繁写入所以没在改音量的位置直接保存
-    /// </summary>
+    public void SetBGMVolume(float volume)
+    {
+        BGMVol = volume;
+    }
+
+    public void SetEffectVolume(float volume)
+    {
+        EffectVol = volume;
+    }
+
     public void Save()
     {
         SaveBGMVolume();
@@ -222,11 +418,36 @@ public class AudioMgr : DontDestroyMonoSingleton<AudioMgr>
 
     public void SaveBGMVolume()
     {
-        SaveDataMgr.SetSystemData(volFile, BGMVol,true);
+        save?.SetSystemData(BgmVolumeKey, BGMVol, true);
     }
 
     public void SaveEffectVolume()
     {
-        SaveDataMgr.SetSystemData(effectVolFile, EffectVol, true);
+        save?.SetSystemData(EffectVolumeKey, EffectVol, true);
     }
+
+    internal void Shutdown()
+    {
+        isInitialized = false;
+        StopAll();
+        foreach (var source in audioSources)
+        {
+            if (source == null) continue;
+            source.Stop();
+            source.clip = null;
+            if (Application.isPlaying) Destroy(source);
+            else DestroyImmediate(source);
+        }
+        audioSources.Clear();
+        sourceVoices.Clear();
+        loadClip = null;
+        save = null;
+    }
+
+    private static void ValidateNumber(float value, string name)
+    {
+        if (float.IsNaN(value) || float.IsInfinity(value)) throw new ArgumentOutOfRangeException(name);
+    }
+
+    private void OnDestroy() => Shutdown();
 }

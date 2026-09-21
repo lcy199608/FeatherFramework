@@ -4,56 +4,35 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Image))]
-public class LanguageSpriteSwitch : MonoBehaviour
+public class LanguageSpriteSwitch : FrameworkBehaviour
 {
     Image image;
+    private System.IDisposable languageSubscription;
     public Sprite CN_S, CN_T, EN, JA, KO;
     private void Start()
     {
+        if (!Services.HasLocalization) return;
         image = GetComponent<Image>();
         Switch();
-        EventCenter.Instance.AddEventListener("LanguageSwitch", Switch);
+        languageSubscription = Services.Events.Subscribe(FrameworkEvents.LanguageChangedId, Switch);
     }
 
     void Switch()
     {
-        switch (LanguageMgr.Instance.CurrentLanguage)
+        Sprite target = Services.Localization.CurrentLanguage switch
         {
-            case LanguageMgr.SupportedLanguage.ChineseSimplified:
-                if(CN_S!= null)
-                {
-                    image.sprite = CN_S;
-                }
-                break;
-            case LanguageMgr.SupportedLanguage.ChineseTraditional:
-                if(CN_T!= null)
-                {
-                    image.sprite = CN_T;
-                }
-                break;
-            case LanguageMgr.SupportedLanguage.English:
-                if(EN!= null)
-                {
-                    image.sprite = EN;
-                }
-                break;
-            case LanguageMgr.SupportedLanguage.Japanese:
-                if(JA!= null)
-                {
-                    image.sprite = JA;
-                }
-                break;
-            case LanguageMgr.SupportedLanguage.Korean:
-                if(KO!= null)
-                {
-                    image.sprite = KO;
-                }
-                break;
-        }
+            LanguageMgr.SupportedLanguage.ChineseSimplified => CN_S,
+            LanguageMgr.SupportedLanguage.ChineseTraditional => CN_T,
+            LanguageMgr.SupportedLanguage.Japanese => JA,
+            LanguageMgr.SupportedLanguage.Korean => KO,
+            _ => EN
+        };
+        image.sprite = target ?? EN ?? CN_S ?? CN_T ?? JA ?? KO;
     }
 
     private void OnDestroy()
     {
-        EventCenter.Instance.RemoveEventListener("LanguageSwitch", Switch);
+        languageSubscription?.Dispose();
+        languageSubscription = null;
     }
 }

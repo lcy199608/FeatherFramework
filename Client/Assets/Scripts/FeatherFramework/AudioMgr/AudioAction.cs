@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-public class AudioAction : MonoBehaviour
+public class AudioAction : FrameworkBehaviour
 {
     public bool isStartPlay;
     public bool isStartStop;
@@ -16,45 +16,80 @@ public class AudioAction : MonoBehaviour
     public string clipName;
     public bool isLoop;
     public float fadeTime = 0;
+    [Tooltip("Allow a non-looping voice to finish independently after this component is destroyed.")]
+    public bool continueOneShotAfterDestroy;
+    private AudioVoiceHandle currentVoice;
 
     private void Start()
     {
         if (isStartPlay)
             PlayAudio();
         if (isStartStop)
-            Invoke("StopAudio", delayTime);
+            ScheduleStop();
     }
 
     private void OnEnable()
     {
-        if (isOnEnablePlay)
+        CancelInvoke(nameof(StopAudio));
+        if (isOnEnablePlay && !isStartPlay)
             PlayAudio();
-        if (isOnEnableStop)
-            Invoke("StopAudio", delayTime);
+        if (isOnEnableStop && !isStartStop)
+            ScheduleStop();
     }
 
     private void OnDisable()
     {
+        CancelInvoke(nameof(StopAudio));
         if (isDestroyStop)
-            Invoke("StopAudio", delayTime);
+            ScheduleStop();
         if (isDestroyPlay)
             PlayAudio();
     }
 
+    private void ScheduleStop()
+    {
+        if (delayTime <= 0)
+        {
+            StopAudio();
+            return;
+        }
+        Invoke(nameof(StopAudio), delayTime);
+    }
+
+    private void OnDestroy()
+    {
+        CancelInvoke(nameof(StopAudio));
+        if (isLoop || !continueOneShotAfterDestroy) currentVoice.Stop();
+        currentVoice = default;
+    }
+
     public void PlayAudio()
     {
+        if (!Framework.IsReady)
+        {
+            return;
+        }
+        currentVoice.Stop();
         if (isLoop)
         {
-            AudioMgr.Instance.PlayLoopAudio(clipName, type, fadeTime, delayTime);
+            currentVoice = Services.Audio.PlayLoopAudio(clipName, type, fadeTime, delayTime);
         }
         else
         {
-            AudioMgr.Instance.PlayAudio(clipName, type, fadeTime, delayTime);
+            currentVoice = Services.Audio.PlayAudio(clipName, type, fadeTime, delayTime);
         }
     }
 
     public void StopAudio()
     {
-        AudioMgr.Instance.StopAudio(clipName, fadeTime);
+        if (!Framework.IsReady)
+        {
+            return;
+        }
+        if (currentVoice.IsValid)
+        {
+            currentVoice.Stop(fadeTime);
+            currentVoice = default;
+        }
     }
 }

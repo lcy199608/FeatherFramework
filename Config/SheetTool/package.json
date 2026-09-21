@@ -3,12 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "description": "Excel based config export tool for FeatherFramework",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "sync": "node ./cli.js sync",
     "validate": "node ./cli.js validate",
-    "export": "node ./cli.js export"
+    "export": "node ./cli.js export",
+    "test": "node --test ./test/*.test.js"
   },
   "dependencies": {
-    "xlsx": "^0.18.5"
+    "xlsx": "0.18.5"
   }
 }
