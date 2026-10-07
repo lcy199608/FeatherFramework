@@ -85,8 +85,8 @@
       "status": "optional",
       "entry": "Framework.Services.Localization",
       "implementation": "LanguageMgr",
-      "purpose": "Localized text, sprites and GameObject variants driven by generated tables",
-      "keywords": ["language", "localization", "i18n", "translation", "语言", "本地化", "翻译"]
+      "purpose": "SystemLanguage tables, localized text/sprite/GameObject variants, fallback and legacy uGUI RTL text layout; rules in docs/localization.md",
+      "keywords": ["language", "localization", "i18n", "translation", "RTL", "bidi", "font", "text", "语言", "本地化", "翻译", "阿拉伯语", "希伯来语", "字体", "文本", "从右到左"]
     },
     {
       "id": "red-dots",

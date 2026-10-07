@@ -13,6 +13,8 @@
 
 阅读命中的 implementation 和至少一个真实 caller。现有模块已经覆盖责任时，扩展该 capability；不要创建平行 manager、service、singleton、resource loader、save wrapper、event bus、timer 或 pool。
 
+语言表、翻译、字体或文本组件任务还必须阅读 [多语言与 RTL 规则](localization.md)，按其中的原文、占位符、字体覆盖和显示验收要求执行。
+
 ## 2. 选择最小接入方式
 
 按以下顺序选择：

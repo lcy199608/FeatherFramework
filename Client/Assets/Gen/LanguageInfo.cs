@@ -43,6 +43,228 @@ namespace cfg
         [JsonProperty("Korean")]
         public string Korean { get; set; }
 
+        /// <summary>
+        /// 南非荷兰语
+        /// </summary>
+        [JsonProperty("Afrikaans")]
+        public string Afrikaans { get; set; }
+
+        /// <summary>
+        /// 阿拉伯语
+        /// </summary>
+        [JsonProperty("Arabic")]
+        public string Arabic { get; set; }
+
+        /// <summary>
+        /// 巴斯克语
+        /// </summary>
+        [JsonProperty("Basque")]
+        public string Basque { get; set; }
+
+        /// <summary>
+        /// 白俄罗斯语
+        /// </summary>
+        [JsonProperty("Belarusian")]
+        public string Belarusian { get; set; }
+
+        /// <summary>
+        /// 保加利亚语
+        /// </summary>
+        [JsonProperty("Bulgarian")]
+        public string Bulgarian { get; set; }
+
+        /// <summary>
+        /// 加泰罗尼亚语
+        /// </summary>
+        [JsonProperty("Catalan")]
+        public string Catalan { get; set; }
+
+        /// <summary>
+        /// 捷克语
+        /// </summary>
+        [JsonProperty("Czech")]
+        public string Czech { get; set; }
+
+        /// <summary>
+        /// 丹麦语
+        /// </summary>
+        [JsonProperty("Danish")]
+        public string Danish { get; set; }
+
+        /// <summary>
+        /// 荷兰语
+        /// </summary>
+        [JsonProperty("Dutch")]
+        public string Dutch { get; set; }
+
+        /// <summary>
+        /// 爱沙尼亚语
+        /// </summary>
+        [JsonProperty("Estonian")]
+        public string Estonian { get; set; }
+
+        /// <summary>
+        /// 法罗语
+        /// </summary>
+        [JsonProperty("Faroese")]
+        public string Faroese { get; set; }
+
+        /// <summary>
+        /// 芬兰语
+        /// </summary>
+        [JsonProperty("Finnish")]
+        public string Finnish { get; set; }
+
+        /// <summary>
+        /// 法语
+        /// </summary>
+        [JsonProperty("French")]
+        public string French { get; set; }
+
+        /// <summary>
+        /// 德语
+        /// </summary>
+        [JsonProperty("German")]
+        public string German { get; set; }
+
+        /// <summary>
+        /// 希腊语
+        /// </summary>
+        [JsonProperty("Greek")]
+        public string Greek { get; set; }
+
+        /// <summary>
+        /// 希伯来语
+        /// </summary>
+        [JsonProperty("Hebrew")]
+        public string Hebrew { get; set; }
+
+        /// <summary>
+        /// 印地语
+        /// </summary>
+        [JsonProperty("Hindi")]
+        public string Hindi { get; set; }
+
+        /// <summary>
+        /// 匈牙利语
+        /// </summary>
+        [JsonProperty("Hungarian")]
+        public string Hungarian { get; set; }
+
+        /// <summary>
+        /// 冰岛语
+        /// </summary>
+        [JsonProperty("Icelandic")]
+        public string Icelandic { get; set; }
+
+        /// <summary>
+        /// 印度尼西亚语
+        /// </summary>
+        [JsonProperty("Indonesian")]
+        public string Indonesian { get; set; }
+
+        /// <summary>
+        /// 意大利语
+        /// </summary>
+        [JsonProperty("Italian")]
+        public string Italian { get; set; }
+
+        /// <summary>
+        /// 拉脱维亚语
+        /// </summary>
+        [JsonProperty("Latvian")]
+        public string Latvian { get; set; }
+
+        /// <summary>
+        /// 立陶宛语
+        /// </summary>
+        [JsonProperty("Lithuanian")]
+        public string Lithuanian { get; set; }
+
+        /// <summary>
+        /// 挪威语
+        /// </summary>
+        [JsonProperty("Norwegian")]
+        public string Norwegian { get; set; }
+
+        /// <summary>
+        /// 波兰语
+        /// </summary>
+        [JsonProperty("Polish")]
+        public string Polish { get; set; }
+
+        /// <summary>
+        /// 葡萄牙语
+        /// </summary>
+        [JsonProperty("Portuguese")]
+        public string Portuguese { get; set; }
+
+        /// <summary>
+        /// 罗马尼亚语
+        /// </summary>
+        [JsonProperty("Romanian")]
+        public string Romanian { get; set; }
+
+        /// <summary>
+        /// 俄语
+        /// </summary>
+        [JsonProperty("Russian")]
+        public string Russian { get; set; }
+
+        /// <summary>
+        /// 塞尔维亚克罗地亚语
+        /// </summary>
+        [JsonProperty("SerboCroatian")]
+        public string SerboCroatian { get; set; }
+
+        /// <summary>
+        /// 斯洛伐克语
+        /// </summary>
+        [JsonProperty("Slovak")]
+        public string Slovak { get; set; }
+
+        /// <summary>
+        /// 斯洛文尼亚语
+        /// </summary>
+        [JsonProperty("Slovenian")]
+        public string Slovenian { get; set; }
+
+        /// <summary>
+        /// 西班牙语
+        /// </summary>
+        [JsonProperty("Spanish")]
+        public string Spanish { get; set; }
+
+        /// <summary>
+        /// 瑞典语
+        /// </summary>
+        [JsonProperty("Swedish")]
+        public string Swedish { get; set; }
+
+        /// <summary>
+        /// 泰语
+        /// </summary>
+        [JsonProperty("Thai")]
+        public string Thai { get; set; }
+
+        /// <summary>
+        /// 土耳其语
+        /// </summary>
+        [JsonProperty("Turkish")]
+        public string Turkish { get; set; }
+
+        /// <summary>
+        /// 乌克兰语
+        /// </summary>
+        [JsonProperty("Ukrainian")]
+        public string Ukrainian { get; set; }
+
+        /// <summary>
+        /// 越南语
+        /// </summary>
+        [JsonProperty("Vietnamese")]
+        public string Vietnamese { get; set; }
+
         public static LanguageInfo ReadFrom(System.IO.BinaryReader reader)
         {
             return new LanguageInfo
@@ -53,6 +275,43 @@ namespace cfg
                 English = Tables.ReadString(reader),
                 Japanese = Tables.ReadString(reader),
                 Korean = Tables.ReadString(reader),
+                Afrikaans = Tables.ReadString(reader),
+                Arabic = Tables.ReadString(reader),
+                Basque = Tables.ReadString(reader),
+                Belarusian = Tables.ReadString(reader),
+                Bulgarian = Tables.ReadString(reader),
+                Catalan = Tables.ReadString(reader),
+                Czech = Tables.ReadString(reader),
+                Danish = Tables.ReadString(reader),
+                Dutch = Tables.ReadString(reader),
+                Estonian = Tables.ReadString(reader),
+                Faroese = Tables.ReadString(reader),
+                Finnish = Tables.ReadString(reader),
+                French = Tables.ReadString(reader),
+                German = Tables.ReadString(reader),
+                Greek = Tables.ReadString(reader),
+                Hebrew = Tables.ReadString(reader),
+                Hindi = Tables.ReadString(reader),
+                Hungarian = Tables.ReadString(reader),
+                Icelandic = Tables.ReadString(reader),
+                Indonesian = Tables.ReadString(reader),
+                Italian = Tables.ReadString(reader),
+                Latvian = Tables.ReadString(reader),
+                Lithuanian = Tables.ReadString(reader),
+                Norwegian = Tables.ReadString(reader),
+                Polish = Tables.ReadString(reader),
+                Portuguese = Tables.ReadString(reader),
+                Romanian = Tables.ReadString(reader),
+                Russian = Tables.ReadString(reader),
+                SerboCroatian = Tables.ReadString(reader),
+                Slovak = Tables.ReadString(reader),
+                Slovenian = Tables.ReadString(reader),
+                Spanish = Tables.ReadString(reader),
+                Swedish = Tables.ReadString(reader),
+                Thai = Tables.ReadString(reader),
+                Turkish = Tables.ReadString(reader),
+                Ukrainian = Tables.ReadString(reader),
+                Vietnamese = Tables.ReadString(reader),
             };
         }
 

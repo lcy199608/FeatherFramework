@@ -70,6 +70,15 @@ Scene component 可继承 `FrameworkBehaviour` 使用 `Services`；普通 C# cla
 
 - 业务代码使用带类型的 `ReleaseRes<T>()`；全量释放由 `FrameworkHost` 负责。
 
+## Localization 与文本
+
+- `LanguageMgr.SupportedLanguage` 已移除；`CurrentLanguage` 和资源 variant 统一使用 `UnityEngine.SystemLanguage`。例如原 `SupportedLanguage.Japanese` 改为 `SystemLanguage.Japanese`；原 `Default` 操作改为 `Localization.FollowSystemLanguage()`。`Unknown` 表示英语回退，不表示跟随系统。
+- 旧 `GameConfig.language` 公共字段改为 `followSystemLanguage` 和 `defaultLanguage`。原字段名作为隐藏 int 保留，反序列化时按旧 0–5 数值一次性迁移；已有 asset 不需要手工重写 YAML。之后由正常 Unity 保存落盘。
+- 旧存档 `LanguageSaveData` 的数字仍按 Default/CN_S/CN_T/English/Japanese/Korean 读取，写入新键 `LanguageSaveData.v1`，其中记录 Version=1、FollowSystem 和语言名称。旧 key 保留，密文和 SaveDataMgr 布局不变；只读存档不自动写入。未知新版记录不会在初始化时覆盖。
+- `GetLanguageById(id)` 保持返回逻辑原文。新增 `GetLanguageById(id, out resolvedLanguage)` 用于缺译后正确选择字体和方向。空英语也会回退 ID。
+- `LanguageSpriteSwitch` / `LanguageGameObjectSwitch` 新增 `variants`；旧五语言字段保留原引用，新列表匹配优先。不要把控制器自身或祖先配置为 variant。
+- `TextOfEnhance.text` 保留逻辑原文，RTL 仅在生成显示文本时转换。动态格式文本使用 `SetRawText(message, resolvedLanguage)`；字体、对齐、富文本限制和翻译规范见 [多语言与 RTL 规则](localization.md)。已有 TextOfEnhance 不需要替换组件或重建 prefab；普通 Text 不会自动获得这些能力。
+
 ## Validation
 
 - `Scripts/verify.ps1` 支持 `-NodePath` 或 `FEATHER_NODE_PATH`。

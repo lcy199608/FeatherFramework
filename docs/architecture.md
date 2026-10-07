@@ -147,6 +147,9 @@ Host 销毁与初始化失败共用关闭顺序：UI → Audio → Localization/
 
 - `LanguageMgr.CurrentLanguage` getter 无写盘副作用；设置相同语言不会重复发布事件。
 - 文本、Sprite 和 GameObject variant 使用 English/可用资源 fallback，避免缺失翻译时空白。
+- 语言类型统一为 `SystemLanguage`，`Chinese` 映射简体，`Unknown` 回退英语；Excel 覆盖 42 个实际语言列。跟随系统是独立模式。存档通过版本化的新 key 兼容旧五语言数字值，GameConfig 保留隐藏旧序列化字段用于一次性迁移。
+- `GetLanguageById(id, out resolvedLanguage)` 返回逻辑原文和实际回退语言。`TextOfEnhance` 持有 RTL 排版/测量缓存，按实际行宽重排后绘制，不修改表数据、原文或字体资产；销毁时释放测量器和语言订阅，Font 回调在 disable 释放。字体由配置者持有。
+- 图片和物体组件的 `variants` 按语言配置，保留旧五语言资源字段；已显示的相同物体不因重复刷新而重新激活。文本配置、翻译和视觉验收边界见 [多语言与 RTL 规则](localization.md)。
 - 红点节点名称、路径、父子关系和旧回调写入口收回到 runtime，业务读取只读视图并通过 RedDotSystem 修改；中间节点路径使用实际完整路径，累计数量饱和到 int.MaxValue 防止溢出。
 - RedDot 数量会 clamp 到 `>= 0`；新 listener 使用 `SubscribeRedDotNode()` 返回的 `IDisposable`。
 

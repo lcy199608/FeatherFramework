@@ -9,7 +9,7 @@
 - **配置表读取**: 基于本地 Excel 的跨平台导表工具，生成 Unity 可直接加载的配置代码与 JSON 数据。
 - **数据持久化**: 提供 slot、dirty flush、损坏字段 fallback 和旧存档兼容边界。
 - **红点系统**: 配置驱动的层级红点，数量向上聚合并支持 disposable subscription。
-- **多语言模块**: 支持文本、Sprite、GameObject variant 和一致的 fallback。
+- **多语言模块**: 使用 Unity `SystemLanguage`，支持全语言表、文本/Sprite/GameObject variant、缺译回退及旧 uGUI Text 的 RTL 显示适配。
 - **跨平台日志Log**: 使用了Log Viewer插件。
 - **常用插件集成**: 包括DOTween、Odin、EasySave等。
 - **能力发现与防重复实现**: 新功能开发前可检索已有模块，验证脚本会阻止游戏代码绕过统一资源、存档、场景与服务边界。
@@ -37,6 +37,7 @@ Panel 用 `Type => UIType.Root / Page / Child` 声明角色。通过 `await UI.O
 - 可运行示例：打开 `Client/Assets/Scenes/Starter/Menu.unity`，体验菜单、场景切换、保存与恢复；代码位于 `Client/Assets/Scripts/Demo/Starter`。
 - 架构说明：[`docs/architecture.md`](docs/architecture.md)
 - 功能接入流程：[`docs/feature-workflow.md`](docs/feature-workflow.md)
+- 翻译、字体与 RTL 文本规则：[`docs/localization.md`](docs/localization.md)
 - Runtime API 迁移说明：[`docs/runtime-api-migration.md`](docs/runtime-api-migration.md)
 - AI/自动化开发约束：[`AGENTS.md`](AGENTS.md)
 - 框架代码变更必须核对相关文档，事实或用法变化时及时同步；未变化则无需改写，也不新增逐次修改报告。文档同步不要求运行整个模块测试。
